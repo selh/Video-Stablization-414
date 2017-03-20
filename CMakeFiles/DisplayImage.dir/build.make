@@ -35,10 +35,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/selhua/Documents/code/opencv_code
+CMAKE_SOURCE_DIR = /home/selhua/Documents/cmpt414-vid
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/selhua/Documents/code/opencv_code
+CMAKE_BINARY_DIR = /home/selhua/Documents/cmpt414-vid
 
 # Include any dependencies generated for this target.
 include CMakeFiles/DisplayImage.dir/depend.make
@@ -51,17 +51,17 @@ include CMakeFiles/DisplayImage.dir/flags.make
 
 CMakeFiles/DisplayImage.dir/SIFT.cpp.o: CMakeFiles/DisplayImage.dir/flags.make
 CMakeFiles/DisplayImage.dir/SIFT.cpp.o: SIFT.cpp
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/selhua/Documents/code/opencv_code/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/selhua/Documents/cmpt414-vid/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/DisplayImage.dir/SIFT.cpp.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/DisplayImage.dir/SIFT.cpp.o -c /home/selhua/Documents/code/opencv_code/SIFT.cpp
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/DisplayImage.dir/SIFT.cpp.o -c /home/selhua/Documents/cmpt414-vid/SIFT.cpp
 
 CMakeFiles/DisplayImage.dir/SIFT.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/DisplayImage.dir/SIFT.cpp.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/selhua/Documents/code/opencv_code/SIFT.cpp > CMakeFiles/DisplayImage.dir/SIFT.cpp.i
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/selhua/Documents/cmpt414-vid/SIFT.cpp > CMakeFiles/DisplayImage.dir/SIFT.cpp.i
 
 CMakeFiles/DisplayImage.dir/SIFT.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/DisplayImage.dir/SIFT.cpp.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/selhua/Documents/code/opencv_code/SIFT.cpp -o CMakeFiles/DisplayImage.dir/SIFT.cpp.s
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/selhua/Documents/cmpt414-vid/SIFT.cpp -o CMakeFiles/DisplayImage.dir/SIFT.cpp.s
 
 CMakeFiles/DisplayImage.dir/SIFT.cpp.o.requires:
 .PHONY : CMakeFiles/DisplayImage.dir/SIFT.cpp.o.requires
@@ -125,6 +125,6 @@ CMakeFiles/DisplayImage.dir/clean:
 .PHONY : CMakeFiles/DisplayImage.dir/clean
 
 CMakeFiles/DisplayImage.dir/depend:
-	cd /home/selhua/Documents/code/opencv_code && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/selhua/Documents/code/opencv_code /home/selhua/Documents/code/opencv_code /home/selhua/Documents/code/opencv_code /home/selhua/Documents/code/opencv_code /home/selhua/Documents/code/opencv_code/CMakeFiles/DisplayImage.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/selhua/Documents/cmpt414-vid && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/selhua/Documents/cmpt414-vid /home/selhua/Documents/cmpt414-vid /home/selhua/Documents/cmpt414-vid /home/selhua/Documents/cmpt414-vid /home/selhua/Documents/cmpt414-vid/CMakeFiles/DisplayImage.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/DisplayImage.dir/depend
 

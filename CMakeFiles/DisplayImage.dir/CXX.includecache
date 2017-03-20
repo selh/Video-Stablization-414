@@ -6,10 +6,14 @@
 
 #IncludeRegexTransform: 
 
-/home/selhua/Documents/code/opencv_code/SIFT.cpp
+/home/selhua/Documents/cmpt414-vid/SIFT.cpp
 stdio.h
 -
 opencv2/opencv.hpp
+-
+vector
+-
+math.h
 -
 
 /usr/local/include/opencv/cxcore.h

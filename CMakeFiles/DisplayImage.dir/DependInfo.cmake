@@ -4,7 +4,7 @@ SET(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 SET(CMAKE_DEPENDS_CHECK_CXX
-  "/home/selhua/Documents/code/opencv_code/SIFT.cpp" "/home/selhua/Documents/code/opencv_code/CMakeFiles/DisplayImage.dir/SIFT.cpp.o"
+  "/home/selhua/Documents/cmpt414-vid/SIFT.cpp" "/home/selhua/Documents/cmpt414-vid/CMakeFiles/DisplayImage.dir/SIFT.cpp.o"
   )
 SET(CMAKE_CXX_COMPILER_ID "GNU")
 
