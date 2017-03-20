@@ -1,7 +1,9 @@
 #include <opencv2/opencv.hpp>
 #include <math.h>
+#include <iostream>
 
 using namespace cv;
+using namespace std;
 
 #define EXTREMA_THRESHOLD 0.03
 #define CONSTANT_R 10 // SIFT paper recommends using r=10
@@ -9,6 +11,11 @@ using namespace cv;
 
 float retrieveFloat(Mat** matrix, int x, int y, int s) {
     // TODO: check bounds here?
+    if (x < 0 || y < 0
+        || x >= matrix[s]->size().width
+        || y >= matrix[s]->size().height) {
+        return 0;
+    }
     return matrix[s]->at<float>(Point(x, y));
 }
 

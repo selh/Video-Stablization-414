@@ -3,6 +3,8 @@
 #include <vector>
 #include <math.h>
 
+#include "localization.h"
+
 using namespace cv;
 using namespace std;
 
@@ -195,16 +197,31 @@ int main(int argc, char** argv) {
   //   }
   // }
 
-  //neighbors(diff_img2, diff_img3, diff_img1, &extrema);
-  neighbors(diff_img5, diff_img6, diff_img4, &extrema);
+  neighbors(diff_img2, diff_img3, diff_img1, &extrema);
+  //neighbors(diff_img5, diff_img6, diff_img4, &extrema);
 
-
+  /* *** TODO: When we have more 'scales' or w/e need to change this *** */
+  diff_img1.convertTo(diff_img1, CV_32F);
+  diff_img2.convertTo(diff_img2, CV_32F);
+  diff_img3.convertTo(diff_img3, CV_32F);
+  Mat* dog_images[3];
+  dog_images[0] = &diff_img1;
+  dog_images[1] = &diff_img2;
+  dog_images[2] = &diff_img3;
+  /* *** *** */
   int x_cor, y_cor;
   for(int x=0; x < extrema.size(); x+=2){
-    //cout << "(" << extrema[x] << "," << extrema[x+1] << ") "; 
+    //cout << "(" << extrema[x] << "," << extrema[x+1] << ") ";
     x_cor = extrema[x];
     y_cor = extrema[x+1];
-    circle(img_scale2, Point(x_cor, y_cor), 1, Scalar(0,0,255));
+
+    // Section 4 & 4.1
+    if (checkExtrema(dog_images, x_cor, y_cor, 1) ||
+      eliminateEdgeResponse(dog_images, x_cor, y_cor, 1)) {
+        continue;
+    }
+
+    circle(gray_img, Point(x_cor, y_cor), 1, Scalar(0,0,255));
 
   }
 
@@ -228,7 +245,7 @@ int main(int argc, char** argv) {
   // imshow("D3", diff_img6);
 
   namedWindow("Display Image", WINDOW_AUTOSIZE );
-  imshow("Display Image", img_scale2);
+  imshow("Display Image", gray_img);
   waitKey(0);
 
   return 0;
