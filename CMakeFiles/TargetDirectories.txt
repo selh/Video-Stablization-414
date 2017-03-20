@@ -1,1 +1,0 @@
-/home/selhua/Documents/cmpt414-vid/CMakeFiles/DisplayImage.dir

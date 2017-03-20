@@ -195,8 +195,8 @@ int main(int argc, char** argv) {
   //   }
   // }
 
-  neighbors(diff_img2, diff_img3, diff_img1, &extrema);
-  //neighbors(diff_img5, diff_img6, diff_img4, &extrema);
+  //neighbors(diff_img2, diff_img3, diff_img1, &extrema);
+  neighbors(diff_img5, diff_img6, diff_img4, &extrema);
 
 
   int x_cor, y_cor;
@@ -204,7 +204,7 @@ int main(int argc, char** argv) {
     //cout << "(" << extrema[x] << "," << extrema[x+1] << ") "; 
     x_cor = extrema[x];
     y_cor = extrema[x+1];
-    circle(gray_img, Point(x_cor, y_cor), 1, Scalar(0,0,255));
+    circle(img_scale2, Point(x_cor, y_cor), 1, Scalar(0,0,255));
 
   }
 
@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
   // imshow("D3", diff_img6);
 
   namedWindow("Display Image", WINDOW_AUTOSIZE );
-  imshow("Display Image", gray_img);
+  imshow("Display Image", img_scale2);
   waitKey(0);
 
   return 0;
