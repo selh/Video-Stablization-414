@@ -1,4 +1,11 @@
-DisplayImage
-CMake*
-CMakeFiles/
+# Ignore all local cmake files
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
 Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+DisplayImage
