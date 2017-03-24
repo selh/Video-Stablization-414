@@ -7,7 +7,16 @@ using namespace std;
 
 // THIS FILE ASSUMES CV_32F!
 
-// todo: cache results???
+// TODO: might be slow if we have to repeat many times?
+// could generate the 16x16 gaussian matrix beforehand and just index into it.
+float gaussianWeightingFunction(feature keypoint, int x, int y) {
+    float distance = sqrt(pow(keypoint.location.x - x, 2) + pow(keypoint.location.y - y, 2));
+    // 128 = 2 * (0.5 * windowsize=16)^2
+    // e ^ (-(x - mu)^2 / (2*sigma^2))
+    return exp(-pow(distance, 2) / 128);
+}
+
+// todo: cache results??? use results from SIFT (5)?
 float calculateMagnitude(Mat& image, int x, int y) {
     float leftTerm  = pow(image.at<float>(Point(x+1, y)) - image.at<float>(Point(x-1,y)), 2);
     float rightTerm = pow(image.at<float>(Point(x, y+1)) - image.at<float>(Point(x,y-1)), 2);
@@ -50,11 +59,27 @@ vector<float> generateHistogram(Mat& image, feature keypoint, Point topLeft) {
             // does this actually work...?
             int bin = positive_modulo((o / (M_PI / 4)), 8);
 
-            histogram[bin] += m; // multiple here by the gaussian
+            // magnitude is weighted by the distance from the keypoint using Gaussian blur
+            // TODO: trilinear interpolation???
+            histogram[bin] += m * gaussianWeightingFunction(keypoint, x, y);
         }
     }
 
     return histogram;
+}
+
+void normalizeDescriptor(vector<float>& descriptor, bool threshold) {
+    float length = 0;
+    for (int i = 0; i < descriptor.size(); i++) {
+        if (threshold && descriptor[i] > 0.2) {
+            descriptor[i] = 0.2;
+        }
+        length += pow(descriptor[i], 2);
+    }
+    length = sqrt(length);
+    for (int i = 0; i < descriptor.size(); i++) {
+        descriptor[i] /= length;
+    }
 }
 
 // remember to delete result
@@ -80,14 +105,9 @@ vector<float> generateDescriptor(feature keypoint, Mat& image) {
     }
 
     // Normalize resulting descriptor vector, which is 128 dimensions
-    float length = 0;
-    for (int i = 0; i < descriptor.size(); i++) {
-        length += pow(descriptor[i], 2);
-    }
-    length = sqrt(length);
-    for (int i = 0; i < descriptor.size(); i++) {
-        descriptor[i] /= length;
-    }
+    normalizeDescriptor(descriptor, false);
+    //threshold values to 0.2 and re-normalize...
+    normalizeDescriptor(descriptor, true);
 
     return descriptor;
 }
