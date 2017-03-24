@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include "localization.h"
+#include "descriptor.h"
 
 using namespace cv;
 using namespace std;
@@ -224,6 +225,18 @@ int main(int argc, char** argv) {
     circle(gray_img, Point(x_cor, y_cor), 1, Scalar(0,0,255));
 
   }
+  // Descriptor stuff. still WIP... :'(
+  // feature feature;
+  // feature.location = Point(x_cor, y_cor);
+  // feature.magnitude = 1.7;
+  // feature.orientation = 0;
+  // Mat grayGaussianFloat = Mat::zeros(sigma_img1.size(), sigma_img1.type());
+  // sigma_img1.convertTo(grayGaussianFloat, CV_32F);
+  // float* result = generateDescriptor(feature, &grayGaussianFloat);
+  // for (int i = 0; i < 128; i++) {
+  //   cout << result[i] << endl;
+  // }
+  // delete result;
 
 
   // diff_img4 = diff_img4*40;
