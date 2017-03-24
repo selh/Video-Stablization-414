@@ -232,8 +232,8 @@ int main(int argc, char** argv) {
   feature.orientation = 0;
   Mat grayGaussianFloat = Mat::zeros(sigma_img1.size(), sigma_img1.type());
   sigma_img1.convertTo(grayGaussianFloat, CV_32F);
-  vector<float> result = generateDescriptor(feature, grayGaussianFloat);
-  for (int i = 0; i < result.size(); i++) {
+  Vec<float, 128> result = generateDescriptor(feature, grayGaussianFloat);
+  for (int i = 0; i < 128; i++) {
     cout << result[i] << endl;
   }
 

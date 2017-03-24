@@ -15,6 +15,6 @@ struct feature {
     float orientation;
 };
 
-vector<float> generateDescriptor(feature keypoint, Mat& image);
+Vec<float, 128> generateDescriptor(feature keypoint, Mat& image);
 
 #endif

@@ -68,30 +68,17 @@ vector<float> generateHistogram(Mat& image, feature keypoint, Point topLeft) {
     return histogram;
 }
 
-void normalizeDescriptor(vector<float>& descriptor, bool threshold) {
-    float length = 0;
-    for (int i = 0; i < descriptor.size(); i++) {
-        if (threshold && descriptor[i] > 0.2) {
-            descriptor[i] = 0.2;
-        }
-        length += pow(descriptor[i], 2);
-    }
-    length = sqrt(length);
-    for (int i = 0; i < descriptor.size(); i++) {
-        descriptor[i] /= length;
-    }
-}
-
 // remember to delete result
 // image should have gaussian filter applied already (and grayscale)
-vector<float> generateDescriptor(feature keypoint, Mat& image) {
+Vec<float, 128> generateDescriptor(feature keypoint, Mat& image) {
     // Assert matrix is in correct form
     int matrixType = image.type();
     assert(matrixType == CV_32F);
-    
-    vector<float> descriptor;
+
+    Vec<float, 128> featureVector;
 
     // 16x16 window around keypoint (start at location.x/y - 8 to +8)
+    int count = 0;
     for (int x = keypoint.location.x - 8; x < keypoint.location.x + 8; x += 4) {
         for (int y = keypoint.location.y - 8; y < keypoint.location.y + 8; y += 4) {
             if (x < 0 || y < 0 || x >= image.size().width || y >= image.size().height) {
@@ -99,15 +86,22 @@ vector<float> generateDescriptor(feature keypoint, Mat& image) {
                 continue;
             }
             vector<float> histogram = generateHistogram(image, keypoint, Point(x, y));
-            // Copy into our main descriptor
-            descriptor.insert(descriptor.end(), histogram.begin(), histogram.end());
+            // Copy into our feature vector
+            for (int j = 0; j < 8; j++, count++) {
+                featureVector[count] = histogram[j];
+            }
         }
     }
 
     // Normalize resulting descriptor vector, which is 128 dimensions
-    normalizeDescriptor(descriptor, false);
-    //threshold values to 0.2 and re-normalize...
-    normalizeDescriptor(descriptor, true);
+    featureVector /= norm(featureVector);
+    // Threshold values to 0.2 and re-normalize...
+    for (int i = 0; i < 128; i++) {
+        if (featureVector[i] > 0.2) {
+            featureVector[i] = 0.2;
+        }
+    }
+    featureVector /= norm(featureVector);
 
-    return descriptor;
+    return featureVector;
 }
