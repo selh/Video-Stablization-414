@@ -1,4 +1,5 @@
 #include "descriptor.h"
+#include <iostream>
 #include <vector>
 #include <cmath>
 
@@ -7,16 +8,16 @@ using namespace std;
 // THIS FILE ASSUMES CV_32F!
 
 // todo: cache results???
-float calculateMagnitude(Mat* image, int x, int y) {
-    float leftTerm  = pow(image->at<float>(Point(x+1, y)) - image->at<float>(Point(x-1,y)), 2);
-    float rightTerm = pow(image->at<float>(Point(x, y+1)) - image->at<float>(Point(x,y-1)), 2);
+float calculateMagnitude(Mat& image, int x, int y) {
+    float leftTerm  = pow(image.at<float>(Point(x+1, y)) - image.at<float>(Point(x-1,y)), 2);
+    float rightTerm = pow(image.at<float>(Point(x, y+1)) - image.at<float>(Point(x,y-1)), 2);
 
     return sqrt(leftTerm + rightTerm);
 }
 
-float calculateOrientation(Mat* image, int x, int y) {
-    float numerator   = image->at<float>(Point(x, y+1)) - image->at<float>(Point(x, y-1));
-    float denominator = image->at<float>(Point(x+1, y)) - image->at<float>(Point(x+1, y));
+float calculateOrientation(Mat& image, int x, int y) {
+    float numerator   = image.at<float>(Point(x, y+1)) - image.at<float>(Point(x, y-1));
+    float denominator = image.at<float>(Point(x+1, y)) - image.at<float>(Point(x+1, y));
 
     //return atan(numerator / denominator);
     // or this? want full 360
@@ -29,16 +30,16 @@ int positive_modulo(int i, int n) {
 
 // 4x4 grid starting with topLeft
 // remember to delete returned result
-float* generateHistogram(Mat* image, feature keypoint, Point topLeft) {
+vector<float> generateHistogram(Mat& image, feature keypoint, Point topLeft) {
     //TODO: gaussian with sigma 1/2 * keypoint->magnitude, offset from keypoint location
-    float* histogram = new float[8];
+    vector<float> histogram(8);
     for (int i = 0; i < 8; i++) {
         histogram[i] = 0;
     }
     
     for (int x = topLeft.x; x < topLeft.x + 4; x++) {
         for (int y = topLeft.y; y < topLeft.y + 4; y++) {
-            if (x < 0 || y < 0 || x >= image->size().width || y >= image->size().height) {
+            if (x < 0 || y < 0 || x >= image.size().width || y >= image.size().height) {
                 // Avoid OOB
                 continue;
             }
@@ -58,39 +59,35 @@ float* generateHistogram(Mat* image, feature keypoint, Point topLeft) {
 
 // remember to delete result
 // image should have gaussian filter applied already (and grayscale)
-float* generateDescriptor(feature keypoint, Mat* image) {
+vector<float> generateDescriptor(feature keypoint, Mat& image) {
     // Assert matrix is in correct form
-    int matrixType = image->type();
+    int matrixType = image.type();
     assert(matrixType == CV_32F);
+    
+    vector<float> descriptor;
 
-    float* descriptor = new float[128];
-
-    // 16x16 window around keypoint
-    int i = 0;
+    // 16x16 window around keypoint (start at location.x/y - 8 to +8)
     for (int x = keypoint.location.x - 8; x < keypoint.location.x + 8; x += 4) {
         for (int y = keypoint.location.y - 8; y < keypoint.location.y + 8; y += 4) {
-            if (x < 0 || y < 0 || x >= image->size().width || y >= image->size().height) {
+            if (x < 0 || y < 0 || x >= image.size().width || y >= image.size().height) {
                 // Avoid OOB
                 continue;
             }
-            float* histogram = generateHistogram(image, keypoint, Point(x, y));
+            vector<float> histogram = generateHistogram(image, keypoint, Point(x, y));
             // Copy into our main descriptor
-            memcpy(descriptor + i, histogram, 8 * sizeof *histogram);
-            delete histogram;
-            i += 8; //every time we copy 8 elements
+            descriptor.insert(descriptor.end(), histogram.begin(), histogram.end());
         }
     }
 
-    // Normalize resulting descriptor vector (128 dimensions)
+    // Normalize resulting descriptor vector, which is 128 dimensions
     float length = 0;
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < descriptor.size(); i++) {
         length += pow(descriptor[i], 2);
     }
     length = sqrt(length);
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < descriptor.size(); i++) {
         descriptor[i] /= length;
     }
-
 
     return descriptor;
 }

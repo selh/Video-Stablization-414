@@ -226,17 +226,16 @@ int main(int argc, char** argv) {
 
   }
   // Descriptor stuff. still WIP... :'(
-  // feature feature;
-  // feature.location = Point(x_cor, y_cor);
-  // feature.magnitude = 1.7;
-  // feature.orientation = 0;
-  // Mat grayGaussianFloat = Mat::zeros(sigma_img1.size(), sigma_img1.type());
-  // sigma_img1.convertTo(grayGaussianFloat, CV_32F);
-  // float* result = generateDescriptor(feature, &grayGaussianFloat);
-  // for (int i = 0; i < 128; i++) {
-  //   cout << result[i] << endl;
-  // }
-  // delete result;
+  feature feature;
+  feature.location = Point(x_cor, y_cor);
+  feature.magnitude = 1.7;
+  feature.orientation = 0;
+  Mat grayGaussianFloat = Mat::zeros(sigma_img1.size(), sigma_img1.type());
+  sigma_img1.convertTo(grayGaussianFloat, CV_32F);
+  vector<float> result = generateDescriptor(feature, grayGaussianFloat);
+  for (int i = 0; i < result.size(); i++) {
+    cout << result[i] << endl;
+  }
 
 
   // diff_img4 = diff_img4*40;
