@@ -2,7 +2,7 @@
 
 /*Draws circles on to the original gray scale image, scale_size should be size of
 which the image was subsampled at */
-void extremaMapper(vector<int>* extrema, Mat& image, int scale_size){
+void extremaMapper(map< pair<int,int>, pair<int,int> >* extrema_table, Mat& image, int scale_size){
 
   int x_cor, y_cor;
 
@@ -10,10 +10,11 @@ void extremaMapper(vector<int>* extrema, Mat& image, int scale_size){
     scale_size = 1;
   }
 
-  for(int x=0; x < extrema->size(); x+=2){
+  for(map< pair<int,int>, pair<int,int> >::iterator iter=extrema->begin(); iter != extrema->end(); iter++){
     //cout << "(" << extrema[x] << "," << extrema[x+1] << ") "; 
-    x_cor = scale_size*(*extrema)[x];
-    y_cor = scale_size*(*extrema)[x+1];
+    scale_size = iter->second.second;
+    x_cor = scale_size*(iter->first.first);
+    y_cor = scale_size*(iter->first.second);
 
     circle(image, Point(x_cor, y_cor), 2*scale_size, Scalar(0,0,255));
   }
@@ -22,15 +23,19 @@ void extremaMapper(vector<int>* extrema, Mat& image, int scale_size){
 /*Takes the middle array (input_arr) and compares its pixel to its own 
   8 neighbors and the 9 neighbors in top and bottom arrays.
   Precondition: all arrays must be the same size*/
-void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr, vector<int>* extrema){
+void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr, 
+               map< pair<int,int>, pair<int,int> >* extrema_table
+               int scale_size ){
 
   int mid, largest, smallest; //if there exists larger value larger == 1
   int cstart, cstop, rstart, rstop;
+  map< pair<int,int>, pair<int,int> >::iterator iter;
 
   for(int i=0; i< input_arr.cols; i++){
     for(int j=0; j < input_arr.rows; j++){
       largest  = 0;
       smallest = 0;
+
       mid = input_arr.at<uchar>(j,i);
 
       cstart = i - 1;
@@ -77,8 +82,15 @@ void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr, vector<in
       }
 
       if( largest == 0 || smallest == 0 ){
-        extrema->push_back(i);
-        extrema->push_back(j);
+
+        iter = map2.find(make_pair(i,j));
+        if( iter != extrema_table.end() ){
+          map2[make_pair(i,j)] = make_pair(mid,scale_size);
+        }
+        else{
+          iter->second.first = mid;
+          iter->second.second = scale_size;
+        }
       }
 
     }

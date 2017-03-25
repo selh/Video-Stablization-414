@@ -43,9 +43,14 @@ int main(int argc, char** argv) {
   Mat diff_img9 = Mat::zeros(Size( gray_img.cols/4, gray_img.rows/4), gray_img.type()); 
 
   //========== Arrays to hold extrema for now ==========//
-  vector<int> extrema = vector<int>();
-  vector<int> extrema2 = vector<int>();
-  vector<int> extrema3 = vector<int>();
+    map< pair<int,int>, pair<int,int> > extrema_table;
+
+  // map2.find(make_pair(10,10))->second.first
+  // map2[make_pair(10,10)] = make_pair(5,5);
+
+  // vector<int> extrema = vector<int>();
+  // vector<int> extrema2 = vector<int>();
+  // vector<int> extrema3 = vector<int>();
 
   //========== Approximate Laplacian of Gaussian ===========//
   differenceOfGaussian(gray_img, diff_img1, diff_img2, diff_img3, DOG_SIGMA);
@@ -57,14 +62,14 @@ int main(int argc, char** argv) {
 
 
   //========== Find extrema in first scale space and map on to image  =========//
-  neighbors(diff_img2, diff_img3, diff_img1, &extrema);
-  extremaMapper(&extrema, gray_img, 1);
+  neighbors(diff_img2, diff_img3, diff_img1, &extrema_table, 1);
+  extremaMapper(&extrema_table, gray_img, 1);
   //========== Find extrema in second scale space and map on to image =========//
-  neighbors(diff_img5, diff_img6, diff_img4, &extrema2);
-  extremaMapper(&extrema2, gray_img, 2);
+  neighbors(diff_img5, diff_img6, diff_img4, &extrema_table, 2);
+  extremaMapper(&extrema_table, gray_img, 2);
   //========== Find extrema in third scale space and map on to image  =========//
-  neighbors(diff_img8, diff_img9, diff_img7, &extrema3);
-  extremaMapper(&extrema3, gray_img, 4);
+  neighbors(diff_img8, diff_img9, diff_img7, &extrema_table, 4);
+  extremaMapper(&extrema_table, gray_img, 4);
 
 
   namedWindow("Display Image", WINDOW_AUTOSIZE );
