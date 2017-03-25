@@ -48,7 +48,7 @@ vector<float> generateHistogram(Mat& image, feature keypoint, Point topLeft) {
     
     for (int x = topLeft.x; x < topLeft.x + 4; x++) {
         for (int y = topLeft.y; y < topLeft.y + 4; y++) {
-            if (x < 0 || y < 0 || x >= image.size().width || y >= image.size().height) {
+            if (x < 1 || y < 1 || x >= image.size().width - 1 || y >= image.size().height - 1) {
                 // Avoid OOB
                 continue;
             }
@@ -64,7 +64,7 @@ vector<float> generateHistogram(Mat& image, feature keypoint, Point topLeft) {
             histogram[bin] += m * gaussianWeightingFunction(keypoint, x, y);
         }
     }
-
+    
     return histogram;
 }
 
@@ -76,13 +76,17 @@ Vec<float, 128> generateDescriptor(feature keypoint, Mat& image) {
     assert(matrixType == CV_32F);
 
     Vec<float, 128> featureVector;
+    for (int i = 0; i < 128; i++) {
+        featureVector[i] = 0;
+    }
 
     // 16x16 window around keypoint (start at location.x/y - 8 to +8)
     int count = 0;
     for (int x = keypoint.location.x - 8; x < keypoint.location.x + 8; x += 4) {
         for (int y = keypoint.location.y - 8; y < keypoint.location.y + 8; y += 4) {
-            if (x < 0 || y < 0 || x >= image.size().width || y >= image.size().height) {
+            if (x < 1 || y < 1 || x >= image.size().width - 1 || y >= image.size().height - 1) {
                 // Avoid OOB
+                count += 8;
                 continue;
             }
             vector<float> histogram = generateHistogram(image, keypoint, Point(x, y));
