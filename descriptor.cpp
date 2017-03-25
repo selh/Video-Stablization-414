@@ -26,7 +26,7 @@ float calculateMagnitude(Mat& image, int x, int y) {
 
 float calculateOrientation(Mat& image, int x, int y) {
     float numerator   = image.at<float>(Point(x, y+1)) - image.at<float>(Point(x, y-1));
-    float denominator = image.at<float>(Point(x+1, y)) - image.at<float>(Point(x+1, y));
+    float denominator = image.at<float>(Point(x+1, y)) - image.at<float>(Point(x-1, y));
 
     //return atan(numerator / denominator);
     // or this? want full 360
@@ -58,7 +58,7 @@ vector<float> generateHistogram(Mat& image, feature keypoint, Point topLeft) {
             // 45 degree bins or PI/4
             // does this actually work...?
             int bin = positive_modulo((o / (M_PI / 4)), 8);
-
+            
             // magnitude is weighted by the distance from the keypoint using Gaussian blur
             // TODO: trilinear interpolation???
             histogram[bin] += m * gaussianWeightingFunction(keypoint, x, y);
