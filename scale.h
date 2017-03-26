@@ -1,11 +1,12 @@
 #ifndef _SCALE_H
 #define _SCALE_H
 
+#include <iostream>
 #include <map>
-#include <utility>
-#include <type_traits>
 #include <opencv2/opencv.hpp>
+
 using namespace std;
+using namespace cv;
 
 #define DOG_SIGMA 1.6
 #define K_FACTOR sqrt(2)
@@ -20,16 +21,19 @@ void differenceOfGaussian(Mat& gray_img,  Mat& diff_img1,
                           Mat& diff_img2, Mat& diff_img3, 
                           const int sigma);
 
-/*Draws circles on to the original gray scale image, scale_size should be size of
-which the image was subsampled at */
-void extremaMapper(map< pair<int,int>, pair<int,int> >* extrema_table, Mat& image, int scale_size=1);
-
 /*Takes the middle array (input_arr) and compares its pixel to its own 
   8 neighbors and the 9 neighbors in top and bottom arrays.
   Precondition: all arrays must be the same size*/
 void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr, 
-               map< pair<int,int>, pair<int,int> >* extrema_table
+               map< pair<int,int>, pair<int,int> >* extrema_table,
                int scale_size);
+
+/*Draws circles on to the original gray scale image, scale_size should be size of
+which the image was subsampled at */
+void extremaMapper(map< pair<int,int>, pair<int,int> >* extrema_table, Mat& image);
+
+void extremaCleaner(map< pair<int,int>, pair<int,int> >* extrema_table);
+
 
 #include "scale.cpp"
 #endif

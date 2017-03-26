@@ -2,16 +2,15 @@
 
 /*Draws circles on to the original gray scale image, scale_size should be size of
 which the image was subsampled at */
-void extremaMapper(map< pair<int,int>, pair<int,int> >* extrema_table, Mat& image, int scale_size){
+void extremaMapper(map< pair<int,int>, pair<int,int> >* extrema_table, Mat& image){
 
   int x_cor, y_cor;
+  int scale_size = 0;
+  map< pair<int,int>, pair<int,int> >::iterator iter;
 
-  if( scale_size <= 0 ){
-    scale_size = 1;
-  }
 
-  for(map< pair<int,int>, pair<int,int> >::iterator iter=extrema->begin(); iter != extrema->end(); iter++){
-    //cout << "(" << extrema[x] << "," << extrema[x+1] << ") "; 
+  for(iter = extrema_table->begin(); iter != extrema_table->end(); iter++){
+    //cout << iter->first.first << " " << iter->first.second << endl;
     scale_size = iter->second.second;
     x_cor = scale_size*(iter->first.first);
     y_cor = scale_size*(iter->first.second);
@@ -20,11 +19,47 @@ void extremaMapper(map< pair<int,int>, pair<int,int> >* extrema_table, Mat& imag
   }
 }
 
+
+void extremaCleaner(map< pair<int,int>, pair<int,int> >* extrema_table){
+
+  map< pair<int,int>, pair<int,int> >::iterator iter;
+  //map< pair<int,int>, pair<int,int> >::iterator next;
+  auto next = extrema_table->begin();
+  int x_cor1, y_cor1;
+  int x_cor2, y_cor2;
+  //int scale;
+
+
+  for(iter = extrema_table->begin(); iter != extrema_table->end(); iter++){
+    next = iter++;
+    if ( next != extrema_table->end() ){
+      x_cor1 = iter->first.first;
+      x_cor2 = next->first.first;
+
+      y_cor1 = iter->first.second;
+      y_cor2 = next->first.second;
+
+      // scale = next->second.second;
+      // if( iter->second.second > next->second.second){
+      //   scale = iter->second.second;
+      // }
+
+
+      if( abs(x_cor1 - x_cor2) <= 6 && abs(y_cor1 - y_cor2) <= 6 ){
+        cout << "(" << x_cor1  << "," << y_cor1 << ") (" << x_cor2 << "," << y_cor2 << ")" << endl;
+        next = extrema_table->erase(next++);
+      }
+    }
+  }
+  cout<< "done" << endl;
+}
+
+
 /*Takes the middle array (input_arr) and compares its pixel to its own 
   8 neighbors and the 9 neighbors in top and bottom arrays.
   Precondition: all arrays must be the same size*/
 void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr, 
-               map< pair<int,int>, pair<int,int> >* extrema_table
+               map< pair<int,int>, pair<int,int> >* extrema_table,
                int scale_size ){
 
   int mid, largest, smallest; //if there exists larger value larger == 1
@@ -83,9 +118,9 @@ void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr,
 
       if( largest == 0 || smallest == 0 ){
 
-        iter = map2.find(make_pair(i,j));
-        if( iter != extrema_table.end() ){
-          map2[make_pair(i,j)] = make_pair(mid,scale_size);
+        iter = extrema_table->find(make_pair(i,j));
+        if( iter == extrema_table->end() ){
+          extrema_table->insert(make_pair(make_pair(i,j),make_pair(mid,scale_size)));
         }
         else{
           iter->second.first = mid;
