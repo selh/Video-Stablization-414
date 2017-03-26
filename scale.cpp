@@ -23,35 +23,39 @@ void extremaMapper(map< pair<int,int>, pair<int,int> >* extrema_table, Mat& imag
 void extremaCleaner(map< pair<int,int>, pair<int,int> >* extrema_table){
 
   map< pair<int,int>, pair<int,int> >::iterator iter;
-  //map< pair<int,int>, pair<int,int> >::iterator next;
-  auto next = extrema_table->begin();
+  map< pair<int,int>, pair<int,int> >::iterator next_val;
+  //map< pair<int,int>, pair<int,int> >::iterator prev_val;
+
+  //auto next_val = extrema_table->begin();
   int x_cor1, y_cor1;
   int x_cor2, y_cor2;
-  //int scale;
+  //int scale = 16;
 
 
   for(iter = extrema_table->begin(); iter != extrema_table->end(); iter++){
-    next = iter++;
-    if ( next != extrema_table->end() ){
+    //prev_val = prev(iter,1);
+    next_val = next(iter,1);
+
+    if ( next_val != extrema_table->end() ){
       x_cor1 = iter->first.first;
-      x_cor2 = next->first.first;
+      x_cor2 = next_val->first.first;
 
       y_cor1 = iter->first.second;
-      y_cor2 = next->first.second;
+      y_cor2 = next_val->first.second;
 
-      // scale = next->second.second;
-      // if( iter->second.second > next->second.second){
+      // scale = next_val->second.second;
+      // if( iter->second.second > next_val->second.second){
       //   scale = iter->second.second;
       // }
 
 
-      if( abs(x_cor1 - x_cor2) <= 6 && abs(y_cor1 - y_cor2) <= 6 ){
-        cout << "(" << x_cor1  << "," << y_cor1 << ") (" << x_cor2 << "," << y_cor2 << ")" << endl;
-        next = extrema_table->erase(next++);
+      if( abs(x_cor1 - x_cor2) <= 10 && abs(y_cor1 - y_cor2) <= 10 ){
+        //cout << "(" << x_cor1  << "," << y_cor1 << ") (" << x_cor2 << "," << y_cor2 << ")" << endl;
+        next_val = extrema_table->erase(next_val);
       }
     }
   }
-  cout<< "done" << endl;
+  //cout<< "done" << endl;
 }
 
 
