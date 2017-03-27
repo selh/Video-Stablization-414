@@ -1,6 +1,14 @@
 #ifndef _SCALE_H
 #define _SCALE_H
 
+
+#include <iostream>
+#include <map>
+#include <opencv2/opencv.hpp>
+
+using namespace std;
+using namespace cv;
+
 #define DOG_SIGMA 1.6
 #define K_FACTOR sqrt(2)
 
