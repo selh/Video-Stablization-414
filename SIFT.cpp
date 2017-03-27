@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
 #include <vector>
-#include <math.h>
+#include <map>
+#include <iostream>
+
 #include "scale.h"
+#include "orientation.h"
+#include "descriptor.h"
 
 using namespace cv;
 using namespace std;
@@ -66,6 +70,21 @@ int main(int argc, char** argv) {
   neighbors(diff_img8, diff_img9, diff_img7, &extrema3);
   extremaMapper(&extrema3, gray_img, 4);
 
+
+
+  map< pair<int,int>, vector<float> > key_orientation;
+  map< pair<int,int>, vector<float> >::iterator i;
+  //buildWeightedHist(gray_img, &extrema, &key_orientation);
+  buildWeightedHist(gray_img, &extrema, &key_orientation);
+
+  cout << "printing values found for key_orientation" << endl;
+
+  for(i = key_orientation.begin(); i != key_orientation.end(); i++){
+    for(int j = 0; j < i->second.size(); j++ ){
+      cout << i->second[j] << " ";
+    }
+    cout << endl;
+  }
 
   namedWindow("Display Image", WINDOW_AUTOSIZE );
   imshow("Display Image", gray_img);

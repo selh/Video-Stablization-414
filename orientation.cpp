@@ -1,26 +1,26 @@
 #ifdef _ORIENTATION_
 
 
-/*Fix for loop bounds if out of bounds */
-void boundsCheck(int arr_row, int arr_col, 
-                 int* cstart, int* cstop, 
-                 int* rstart, int* rstop ){
+// /*Fix for loop bounds if out of bounds */
+// void boundsCheck(int arr_row, int arr_col, 
+//                  int* cstart, int* cstop, 
+//                  int* rstart, int* rstop ){
   
-  if( *cstart < 0 ){
-    *cstart = 0;
-  }
-  if( *cstop > arr_col-1 ){
-    *cstop = arr_col-1;
-  }
+//   if( *cstart < 0 ){
+//     *cstart = 0;
+//   }
+//   if( *cstop > arr_col-1 ){
+//     *cstop = arr_col-1;
+//   }
 
-  if( *rstart < 0 ){
-    *rstart = 0;
-  }
-  if( *rstop > arr_row-1 ){
-    *rstop = arr_row-1;
-  }
+//   if( *rstart < 0 ){
+//     *rstart = 0;
+//   }
+//   if( *rstop > arr_row-1 ){
+//     *rstop = arr_row-1;
+//   }
 
-}
+// }
 
 /*TODO: Weighted circle dependent on the scale size of the point*/
 float gaussianWeightedCircle(Mat& image, int x, int y){
@@ -41,7 +41,7 @@ float gaussianWeightedCircle(Mat& image, int x, int y){
   for(int col = cstart; col <= cstop; col++){
     for(int row = rstart; row <= rstop; row++){
       value = image.at<uchar>(row, col);
-      region.pushback(value);
+      region.push_back(value);
       mean += value;
       num_vals++;
     }
@@ -93,8 +93,8 @@ void buildWeightedHist(Mat& image, vector<int>* extrema,
       histogram[h] = 0;
     }
 
-    weighted = calculateMagnitude(image, col, row)*gaussianWeightedCircle(image, x_cor, y_cor);
-    distrHistVals(&histogram, calculateOrientation(image, col, row), weighted);
+    weighted = calculateMagnitude(image, x_cor, y_cor)*gaussianWeightedCircle(image, x_cor, y_cor);
+    distrHistVals(&histogram, calculateOrientation(image, x_cor, y_cor), weighted);
 
     max = 0;
     for(int j=0; j< histogram.size(); j++){
@@ -105,14 +105,14 @@ void buildWeightedHist(Mat& image, vector<int>* extrema,
 
     for(int k=0; k< histogram.size(); k++){
       if( histogram[k] >= max*0.8 ){
-        orientations.pushback(k); //orientation
-        orientations.pushback(histogram[k]); //magnitude
+        orientations.push_back(k); //orientation
+        orientations.push_back(histogram[k]); //magnitude
       }
     }
 
     //insert all orientations to corresponding point
-    key_orientation->insert(make_pair(x_cor, y_cor), orientations);
-
+    key_orientation->insert(make_pair(make_pair(x_cor, y_cor), orientations));
+    orientations.clear();
   }
 
 }
