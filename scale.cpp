@@ -1,5 +1,7 @@
 #ifdef _SCALE_H
 
+#include "localization.h"
+
 /*Draws circles on to the original gray scale image, scale_size should be size of
 which the image was subsampled at */
 void extremaMapper(map< pair<int,int>, pair<int,int> >* extrema_table, Mat& image){
@@ -62,7 +64,7 @@ void extremaCleaner(map< pair<int,int>, pair<int,int> >* extrema_table){
 /*Takes the middle array (input_arr) and compares its pixel to its own 
   8 neighbors and the 9 neighbors in top and bottom arrays.
   Precondition: all arrays must be the same size*/
-void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr, 
+void neighbors(Mat& input_arr, Mat& top_arr, Mat& btm_arr, 
                map< pair<int,int>, pair<int,int> >* extrema_table,
                int scale_size ){
 
@@ -70,12 +72,17 @@ void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr,
   int cstart, cstop, rstart, rstop;
   map< pair<int,int>, pair<int,int> >::iterator iter;
 
+  Mat* dog_images[3];
+  dog_images[0] = &btm_arr;
+  dog_images[1] = &input_arr;
+  dog_images[2] = &top_arr;
+
   for(int i=0; i< input_arr.cols; i++){
     for(int j=0; j < input_arr.rows; j++){
       largest  = 0;
       smallest = 0;
 
-      mid = input_arr.at<uchar>(j,i);
+      mid = input_arr.at<float>(j,i);
 
       cstart = i - 1;
       cstop  = i + 1;
@@ -88,10 +95,10 @@ void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr,
           //check 8 neighbors
           //do not evaluate again if at row col of mid value
           if ( (col != i) || (row != j) ){
-            if( largest != 1 && input_arr.at<uchar>(row,col) >= mid ){
+            if( largest != 1 && input_arr.at<float>(row,col) >= mid ){
               largest=1;
             }
-            if( smallest != 1 && input_arr.at<uchar>(row,col) <= mid ){
+            if( smallest != 1 && input_arr.at<float>(row,col) <= mid ){
               smallest=1;
             }
           }
@@ -102,7 +109,7 @@ void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr,
         //top array & bottom array
         for(int tc=cstart; tc <= cstop && largest == 0; tc++){
           for(int tr=rstart; tr <= rstop && largest == 0; tr++){
-            if( top_arr.at<uchar>(tr,tc) > mid || btm_arr.at<uchar>(tr,tc) > mid ){
+            if( top_arr.at<float>(tr,tc) > mid || btm_arr.at<float>(tr,tc) > mid ){
               largest=1;
             }
           }
@@ -113,7 +120,7 @@ void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr,
         //top array & bottom array
         for(int tc=cstart; tc <= cstop && smallest == 0; tc++){
           for(int tr=rstart; tr <= rstop && smallest == 0; tr++){
-            if( top_arr.at<uchar>(tr,tc) < mid || btm_arr.at<uchar>(tr,tc) < mid ){
+            if( top_arr.at<float>(tr,tc) < mid || btm_arr.at<float>(tr,tc) < mid ){
               smallest=1;
             }
           }
@@ -121,6 +128,11 @@ void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr,
       }
 
       if( largest == 0 || smallest == 0 ){
+        // Section 4 & 4.1
+        if (checkExtrema(dog_images, i, j, 1) ||
+          eliminateEdgeResponse(dog_images, i, j, 1)) {
+            continue;
+        }
 
         iter = extrema_table->find(make_pair(i,j));
         if( iter == extrema_table->end() ){
@@ -139,14 +151,14 @@ void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr,
 /*Calculates the difference of Gaussian for 3 sigmas*/
 void differenceOfGaussian(Mat& gray_img, Mat& diff_img1, 
                           Mat& diff_img2, Mat& diff_img3, 
-                          const int sigma){
+                          const float sigma){
 
   if( !gray_img.data ){
     cout << "Cannot compute difference of gaussian with no image" << endl;
     return;
   }
 
-  int sig_factor = sigma;
+  float sig_factor = sigma;
 
   Mat sigma_img1 = Mat::zeros(gray_img.size(), gray_img.type()); 
   Mat sigma_img2 = Mat::zeros(gray_img.size(), gray_img.type());

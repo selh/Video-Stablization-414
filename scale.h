@@ -19,12 +19,12 @@ void boundsCheck(int arr_row, int arr_col,
 /*Calculates the difference of Gaussian for 3 sigmas*/
 void differenceOfGaussian(Mat& gray_img,  Mat& diff_img1, 
                           Mat& diff_img2, Mat& diff_img3, 
-                          const int sigma);
+                          const float sigma);
 
 /*Takes the middle array (input_arr) and compares its pixel to its own 
   8 neighbors and the 9 neighbors in top and bottom arrays.
   Precondition: all arrays must be the same size*/
-void neighbors(Mat& input_arr, const Mat& top_arr, const Mat& btm_arr, 
+void neighbors(Mat& input_arr, Mat& top_arr, Mat& btm_arr, 
                map< pair<int,int>, pair<int,int> >* extrema_table,
                int scale_size);
 

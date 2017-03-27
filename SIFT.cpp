@@ -7,7 +7,6 @@
 // using namespace cv;
 // using namespace std;
 
-
 int main(int argc, char** argv) {
 
   if ( argc != 2 ){
@@ -69,10 +68,36 @@ int main(int argc, char** argv) {
 
 
   //========== Find extrema in first scale space and map on to image  =========//
+  diff_img1.convertTo(diff_img1, CV_32F);
+  diff_img2.convertTo(diff_img2, CV_32F);
+  diff_img3.convertTo(diff_img3, CV_32F);
+  diff_img4.convertTo(diff_img4, CV_32F);
+  diff_img5.convertTo(diff_img5, CV_32F);
+  diff_img6.convertTo(diff_img6, CV_32F);
+  diff_img7.convertTo(diff_img7, CV_32F);
+  diff_img8.convertTo(diff_img8, CV_32F);
+  diff_img9.convertTo(diff_img9, CV_32F);
   neighbors(diff_img2, diff_img3, diff_img1, &extrema_table, 1);
   neighbors(diff_img5, diff_img6, diff_img4, &extrema_table, 2);
   neighbors(diff_img8, diff_img9, diff_img7, &extrema_table, 4);
   //neighbors(diff_img11, diff_img12, diff_img10, &extrema_table, 8);
+  //neighbors(diff_img5, diff_img6, diff_img4, &extrema);
+
+  /* *** TODO: When we have more 'scales' or w/e need to change this *** */
+  // diff_img1.convertTo(diff_img1, CV_32F);
+  // diff_img2.convertTo(diff_img2, CV_32F);
+  // diff_img3.convertTo(diff_img3, CV_32F);
+  // // Descriptor stuff. still WIP... :'(
+  // feature feature;
+  // feature.location = Point(x_cor, y_cor);
+  // feature.magnitude = 1.7;
+  // feature.orientation = 0;
+  // Mat grayGaussianFloat = Mat::zeros(sigma_img1.size(), sigma_img1.type());
+  // sigma_img1.convertTo(grayGaussianFloat, CV_32F);
+  // Vec<float, 128> result = generateDescriptor(feature, grayGaussianFloat);
+  // for (int i = 0; i < 128; i++) {
+  //   cout << result[i] << endl;
+  // }
 
   extremaCleaner(&extrema_table);
   extremaMapper(&extrema_table, gray_img);
