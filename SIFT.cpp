@@ -23,6 +23,18 @@ void SIFT::run() {
             this->neighbors(i, j);
         }
     }
+
+    // // Descriptor stuff. still WIP... :'(
+    // feature feature;
+    // feature.location = Point(x_cor, y_cor);
+    // feature.magnitude = 1.7;
+    // feature.orientation = 0;
+    // Mat grayGaussianFloat = Mat::zeros(sigma_img1.size(), sigma_img1.type());
+    // sigma_img1.convertTo(grayGaussianFloat, CV_32F);
+    // Vec<float, 128> result = generateDescriptor(feature, grayGaussianFloat);
+    // for (int i = 0; i < 128; i++) {
+    //   cout << result[i] << endl;
+    // }
 }
 
 void SIFT::boundsCheck(int arr_row, int arr_col,

@@ -1,8 +1,5 @@
 #pragma once
 
-#define DOG_SIGMA 1.6
-#define K_FACTOR sqrt(2)
-
 #include <vector>
 #include <map>
 #include <opencv2/opencv.hpp>
@@ -12,8 +9,9 @@ using namespace cv;
 
 // DoG
 #define SCALES 4
-// Defined as the number of DoGs per scale
-#define INTERVALS 3
+#define INTERVALS 3 // Defined here as the number of DoGs per scale
+#define DOG_SIGMA 1.6
+#define K_FACTOR sqrt(2)
 
 // Extrema thresholding
 #define EXTREMA_THRESHOLD 0.03
