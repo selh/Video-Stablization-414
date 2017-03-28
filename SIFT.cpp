@@ -230,11 +230,13 @@ bool SIFT::checkExtrema(int x, int y, int scaleIndex, int intervalIndex) {
     colDerivative.at<float>(Point(0, 2)) = (retrieveFloat(x, y, scaleIndex, intervalIndex+1) - retrieveFloat(x, y, scaleIndex, intervalIndex-1)) / 2;
 
     Mat extrema = -(hessian.inv()) * colDerivative;
-    // TODO: does this work?
+
+    // TODO: resample (?) if extrema (or offset) is more than 0.5 in any dimension?
+
     // http://stackoverflow.com/questions/22826456/convert-cvmatexpr-to-type
     float value = retrieveFloat(x, y, scaleIndex, intervalIndex) + (1/2) * ((Mat)(colDerivative.t() * extrema)).at<float>(0);
 
-    return abs(value) >= EXTREMA_THRESHOLD;
+    return abs(value) < EXTREMA_THRESHOLD;
 }
 
 bool SIFT::eliminateEdgeResponse(int x, int y, int scaleIndex, int intervalIndex) {
@@ -242,6 +244,10 @@ bool SIFT::eliminateEdgeResponse(int x, int y, int scaleIndex, int intervalIndex
 
     float tr = hessian.at<float>(Point(0, 0)) + hessian.at<float>(Point(1, 1));
     float det = hessian.at<float>(Point(0, 0)) * hessian.at<float>(Point(1, 1)) - pow(hessian.at<float>(Point(1,0)), 2);
+
+    if (det < 0) {
+        return true;
+    }
 
     // If tr^2/det >= (r+1)^2 / r then the princpal curvature is too large, eliminate point
     return (pow(tr, 2) / det) >= THRESHOLD_R;

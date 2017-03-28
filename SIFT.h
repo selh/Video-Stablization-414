@@ -14,6 +14,7 @@ using namespace cv;
 #define K_FACTOR sqrt(2)
 
 // Extrema thresholding
+#define OFFSET_THRESHOLD 0.5
 #define EXTREMA_THRESHOLD 0.03
 #define CONSTANT_R 10 // SIFT paper recommends using r=10
 #define THRESHOLD_R (((CONSTANT_R + 1) * (CONSTANT_R + 1)) / CONSTANT_R)
