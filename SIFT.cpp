@@ -1,111 +1,146 @@
-// #include <stdio.h>
-// #include <opencv2/core/core.hpp>
-#include <vector>
-#include <math.h>
-#include "scale.h"
+#include "SIFT.h"
 
-// using namespace cv;
-// using namespace std;
+SIFT::SIFT(Mat& template_image) {
+    cvtColor(template_image, gray_img, CV_BGR2GRAY);
+    gray_img.convertTo(gray_img, CV_32F);
+}
 
-int main(int argc, char** argv) {
+SIFT::~SIFT() {
 
-  if ( argc != 2 ){
-    printf("usage: DisplayImage.out <Image_Path>\n");
-    return -1;
-  }
+}
 
-  Mat template_img;
-  template_img = imread( argv[1], 1 );
+void SIFT::run() {
+    // Generate DoGs
+    int scale = 1;
+    for (int i = 0; i < SCALES; i++, scale *= 2) {
+        resize(gray_img, imageScales[i], gray_img.size() / scale);
+        this->differenceOfGaussian(i, pow(K_FACTOR, scale) * DOG_SIGMA);
+    }
 
-  if ( !template_img.data ){
-    printf("No Template data \n");
-    return -1;
-  }
+    // Generate neighbors
+    for (int i = 0; i < SCALES; i++) {
+        for (int j = 1; j < INTERVALS - 1; j++) {
+            this->neighbors(i, j);
+        }
+    }
+}
 
-  //=========Initalize arrays to hold image scaled for each octave==========//
-  Mat gray_img, img_scale2, img_scale3, img_scale4; //holds the image resized to each scale at octave
+void SIFT::boundsCheck(int arr_row, int arr_col,
+    int* cstart, int* cstop,
+    int* rstart, int* rstop) {
+    if (*cstart < 0) {
+        *cstart = 0;
+    }
+    if (*cstop > arr_col - 1) {
+        *cstop = arr_col - 1;
+    }
 
-  //=========Convert to grayscale image===========//
-  cvtColor(template_img, gray_img, CV_BGR2GRAY);
+    if (*rstart < 0) {
+        *rstart = 0;
+    }
+    if (*rstop > arr_row - 1) {
+        *rstop = arr_row - 1;
+    }
+}
 
-  //holds the DoG approximation (octave 1)
-  Mat diff_img1 = Mat::zeros(gray_img.size(), gray_img.type());
-  Mat diff_img2 = Mat::zeros(gray_img.size(), gray_img.type());
-  Mat diff_img3 = Mat::zeros(gray_img.size(), gray_img.type()); 
-  //holds the DoG approximation (octave 2)
-  Mat diff_img4 = Mat::zeros(Size( gray_img.cols/2, gray_img.rows/2), gray_img.type());
-  Mat diff_img5 = Mat::zeros(Size( gray_img.cols/2, gray_img.rows/2), gray_img.type());
-  Mat diff_img6 = Mat::zeros(Size( gray_img.cols/2, gray_img.rows/2), gray_img.type()); 
-  //holds the DoG approximation (octave 3)
-  Mat diff_img7 = Mat::zeros(Size( gray_img.cols/4, gray_img.rows/4), gray_img.type());
-  Mat diff_img8 = Mat::zeros(Size( gray_img.cols/4, gray_img.rows/4), gray_img.type());
-  Mat diff_img9 = Mat::zeros(Size( gray_img.cols/4, gray_img.rows/4), gray_img.type()); 
+void SIFT::extremaMapper(Mat& image) {
+    int x_cor, y_cor;
+    int scale_size = 0;
+    map<pair<int, int>, Extrema>::iterator iter;
 
-  //holds the DoG approximation (octave 4)
-  Mat diff_img10 = Mat::zeros(Size( gray_img.cols/8, gray_img.rows/8), gray_img.type());
-  Mat diff_img11 = Mat::zeros(Size( gray_img.cols/8, gray_img.rows/8), gray_img.type());
-  Mat diff_img12 = Mat::zeros(Size( gray_img.cols/8, gray_img.rows/8), gray_img.type()); 
+    for(iter = extremas.begin(); iter != extremas.end(); iter++){
+        Extrema extrema = iter->second;
+        circle(image, extrema.location * extrema.scale, 2 * extrema.scale, Scalar(0,0,255));
+    }
+}
 
-  //========== Arrays to hold extrema for now ==========//
-    map< pair<int,int>, pair<int,int> > extrema_table;
+void SIFT::differenceOfGaussian(int index, float sigma) {
+    // e.g. for INTERVALS = 3, we need to calculate 4 gaussian blurs to generate three DoGs
+    for (int i = 0; i < INTERVALS + 1; i++) {
+        GaussianBlur(imageScales[index], gaussians[index][i], Size(3, 3), sigma);
+        sigma = K_FACTOR * sigma;
+        if (i != 0) {
+            subtract(gaussians[index][i], gaussians[index][i - 1], dogs[index][i - 1]);
+        }
+    }
+}
 
-  // map2.find(make_pair(10,10))->second.first
-  // map2[make_pair(10,10)] = make_pair(5,5);
+void SIFT::neighbors(int scaleIndex, int current) {
+    int mid, largest, smallest; //if there exists larger value larger == 1
+    int cstart, cstop, rstart, rstop;
+    map<pair<int, int>, Extrema> ::iterator iter;
 
-  // vector<int> extrema = vector<int>();
-  // vector<int> extrema2 = vector<int>();
-  // vector<int> extrema3 = vector<int>();
+    for (int i = 0; i < dogs[scaleIndex][current].cols; i++) {
+        for (int j = 0; j < dogs[scaleIndex][current].rows; j++) {
+            largest = 0;
+            smallest = 0;
 
-  //========== Approximate Laplacian of Gaussian ===========//
-  differenceOfGaussian(gray_img, diff_img1, diff_img2, diff_img3, DOG_SIGMA);
-  resize(gray_img, img_scale2, Size( gray_img.cols/2, gray_img.rows/2));
-  differenceOfGaussian(img_scale2, diff_img4, diff_img5, diff_img6, pow(K_FACTOR,2)*DOG_SIGMA);
-  resize(gray_img, img_scale3, Size( gray_img.cols/4, gray_img.rows/4));
-  differenceOfGaussian(img_scale3, diff_img7, diff_img8, diff_img9, pow(K_FACTOR,4)*DOG_SIGMA);
-  // resize(gray_img, img_scale4, Size( gray_img.cols/8, gray_img.rows/8)); 
-  // differenceOfGaussian(img_scale4, diff_img10, diff_img11, diff_img12, pow(K_FACTOR,8)*DOG_SIGMA);
+            mid = dogs[scaleIndex][current].at<float>(j, i);
 
+            cstart = i - 1;
+            cstop = i + 1;
+            rstart = j - 1;
+            rstop = j + 1;
+            boundsCheck(dogs[scaleIndex][current].rows, dogs[scaleIndex][current].cols, &cstart, &cstop, &rstart, &rstop);
 
+            for (int col = cstart; col <= cstop; col++) {
+                for (int row = rstart; row <= rstop; row++) {
+                    //check 8 neighbors
+                    //do not evaluate again if at row col of mid value
+                    if ((col != i) || (row != j)) {
+                        if (largest != 1 && dogs[scaleIndex][current].at<float>(row, col) >= mid) {
+                            largest = 1;
+                        }
+                        if (smallest != 1 && dogs[scaleIndex][current].at<float>(row, col) <= mid) {
+                            smallest = 1;
+                        }
+                    }
+                }
+            }
 
-  //========== Find extrema in first scale space and map on to image  =========//
-  diff_img1.convertTo(diff_img1, CV_32F);
-  diff_img2.convertTo(diff_img2, CV_32F);
-  diff_img3.convertTo(diff_img3, CV_32F);
-  diff_img4.convertTo(diff_img4, CV_32F);
-  diff_img5.convertTo(diff_img5, CV_32F);
-  diff_img6.convertTo(diff_img6, CV_32F);
-  diff_img7.convertTo(diff_img7, CV_32F);
-  diff_img8.convertTo(diff_img8, CV_32F);
-  diff_img9.convertTo(diff_img9, CV_32F);
-  neighbors(diff_img2, diff_img3, diff_img1, &extrema_table, 1);
-  neighbors(diff_img5, diff_img6, diff_img4, &extrema_table, 2);
-  neighbors(diff_img8, diff_img9, diff_img7, &extrema_table, 4);
-  //neighbors(diff_img11, diff_img12, diff_img10, &extrema_table, 8);
-  //neighbors(diff_img5, diff_img6, diff_img4, &extrema);
+            if (largest != 1) {
+                //top array & bottom array
+                for (int tc = cstart; tc <= cstop && largest == 0; tc++) {
+                    for (int tr = rstart; tr <= rstop && largest == 0; tr++) {
+                        if (dogs[scaleIndex][current+1].at<float>(tr, tc) > mid || dogs[scaleIndex][current-1].at<float>(tr, tc) > mid) {
+                            largest = 1;
+                        }
+                    }
+                }
+            }
 
-  /* *** TODO: When we have more 'scales' or w/e need to change this *** */
-  // diff_img1.convertTo(diff_img1, CV_32F);
-  // diff_img2.convertTo(diff_img2, CV_32F);
-  // diff_img3.convertTo(diff_img3, CV_32F);
-  // // Descriptor stuff. still WIP... :'(
-  // feature feature;
-  // feature.location = Point(x_cor, y_cor);
-  // feature.magnitude = 1.7;
-  // feature.orientation = 0;
-  // Mat grayGaussianFloat = Mat::zeros(sigma_img1.size(), sigma_img1.type());
-  // sigma_img1.convertTo(grayGaussianFloat, CV_32F);
-  // Vec<float, 128> result = generateDescriptor(feature, grayGaussianFloat);
-  // for (int i = 0; i < 128; i++) {
-  //   cout << result[i] << endl;
-  // }
+            if (smallest != 1) {
+                //top array & bottom array
+                for (int tc = cstart; tc <= cstop && smallest == 0; tc++) {
+                    for (int tr = rstart; tr <= rstop && smallest == 0; tr++) {
+                        if (dogs[scaleIndex][current+1].at<float>(tr, tc) < mid || dogs[scaleIndex][current-1].at<float>(tr, tc) < mid) {
+                            smallest = 1;
+                        }
+                    }
+                }
+            }
 
-  extremaCleaner(&extrema_table);
-  extremaMapper(&extrema_table, gray_img);
+            if (largest == 0 || smallest == 0) {
+                // Section 4 & 4.1
+                // if (checkExtrema(i, j, current) ||
+                //     eliminateEdgeResponse(i, j, current)) {
+                //     continue;
+                // }
 
-
-  namedWindow("Display Image", WINDOW_AUTOSIZE );
-  imshow("Display Image", gray_img);
-  waitKey(0);
-
-  return 0;
+                iter = extremas.find(make_pair(i, j));
+                if (iter == extremas.end()) {
+                    Extrema extrema;
+                    extrema.scaleIndex = scaleIndex;
+                    extrema.scale = pow(2, scaleIndex);
+                    extrema.location = Point(i, j);
+                    extrema.intensity = mid;
+                    extremas.insert(make_pair(make_pair(i, j), extrema));
+                } else {
+                    iter->second.intensity = mid;
+                    iter->second.scaleIndex = scaleIndex;
+                    iter->second.scale = pow(2, scaleIndex);
+                }
+            }
+        }
+    }
 }
