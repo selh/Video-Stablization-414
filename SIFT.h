@@ -10,14 +10,21 @@
 using namespace std;
 using namespace cv;
 
+// DoG
 #define SCALES 4
 // Defined as the number of DoGs per scale
 #define INTERVALS 3
+
+// Extrema thresholding
+#define EXTREMA_THRESHOLD 0.03
+#define CONSTANT_R 10 // SIFT paper recommends using r=10
+#define THRESHOLD_R (((CONSTANT_R + 1) * (CONSTANT_R + 1)) / CONSTANT_R)
 
 struct Extrema {
     //x, y, σ, m, θ
     int scale;
     int scaleIndex;
+    int intervalIndex;
     Point location;
     float sigma;
     float magnitude;
@@ -41,6 +48,12 @@ private:
                  int* rstart, int* rstop );
     void differenceOfGaussian(int index, float sigma);
     void neighbors(int scaleIndex, int current);
+
+    // Extrema checking
+    float retrieveFloat(int x, int y, int scaleIndex, int intervalIndex);
+    Mat calculateHessianMatrix33(int x, int y, int scaleIndex, int intervalIndex);
+    bool checkExtrema(int x, int y, int scaleIndex, int intervalIndex);
+    bool eliminateEdgeResponse(int x, int y, int scaleIndex, int intervalIndex);
 public:
     ~SIFT();
     SIFT(Mat& template_image);
