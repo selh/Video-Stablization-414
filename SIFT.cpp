@@ -26,17 +26,18 @@ void SIFT::run() {
         }
     }
 
-    // // Descriptor stuff. still WIP... :'(
-    // feature feature;
-    // feature.location = Point(x_cor, y_cor);
-    // feature.magnitude = 1.7;
-    // feature.orientation = 0;
-    // Mat grayGaussianFloat = Mat::zeros(sigma_img1.size(), sigma_img1.type());
-    // sigma_img1.convertTo(grayGaussianFloat, CV_32F);
-    // Vec<float, 128> result = generateDescriptor(feature, grayGaussianFloat);
-    // for (int i = 0; i < 128; i++) {
-    //   cout << result[i] << endl;
-    // }
+    // Create orientations
+    // <...>
+
+    // Generate descriptors
+    map<pair<int,int>,Extrema>::iterator it;
+    for (it = extremas.begin(); it != extremas.end(); it++) {
+        it->second.descriptor = generateDescriptor(it->second);
+    }
+}
+
+map<pair<int, int>, Extrema>* SIFT::getExtremas() {
+    return &extremas;
 }
 
 void SIFT::boundsCheck(int arr_row, int arr_col,
@@ -64,7 +65,7 @@ void SIFT::extremaMapper(Mat& image) {
 
     for(iter = extremas.begin(); iter != extremas.end(); iter++){
         Extrema extrema = iter->second;
-        circle(image, extrema.location * extrema.scale, 2 * extrema.scale, Scalar(0,0,255));
+        circle(image, extrema.location, 2 * extrema.scale, Scalar(0,0,255));
     }
 }
 
@@ -150,13 +151,20 @@ void SIFT::neighbors(int scaleIndex, int intervalIndex) {
                     extrema.intervalIndex = intervalIndex;
                     extrema.scaleIndex = scaleIndex;
                     extrema.scale = pow(2, scaleIndex);
-                    extrema.location = Point(i, j);
+                    extrema.location = Point(i, j) * extrema.scale;
+                    extrema.scaleLocation = Point(i, j);
                     extrema.intensity = mid;
+                    // default values.
+                    extrema.magnitude = 1;
+                    extrema.orientation = 0;
                     extremas.insert(make_pair(make_pair(i, j), extrema));
                 } else {
-                    iter->second.intensity = mid;
+                    iter->second.intervalIndex = intervalIndex;
                     iter->second.scaleIndex = scaleIndex;
+                    iter->second.intensity = mid;
                     iter->second.scale = pow(2, scaleIndex);
+                    iter->second.location = Point(i, j) * iter->second.scale;
+                    iter->second.scaleLocation = Point(i, j);
                 }
             }
         }
@@ -256,32 +264,106 @@ float SIFT::calculateOrientation(Mat& image, int x, int y) {
 
 void SIFT::generateMagnitudes(int scaleIndex, int intervalIndex) {
     Mat gaussian = gaussians[scaleIndex][intervalIndex];
-    Mat resized;
-
-    // Resize it so we can index it with normal image coordinates later
-    resize(gaussian, resized, gaussian.size() * ((int)pow(2, scaleIndex)));
-    magnitudes[scaleIndex][intervalIndex] = Mat::zeros(resized.size(), resized.type());
+    magnitudes[scaleIndex][intervalIndex] = Mat::zeros(gaussian.size(), gaussian.type());
 
     // Start at 1 and end at (length - 1) to prevent out of bounds access
-    for (int x = 1; x < resized.size().width - 1; x++) {
-        for (int y = 1; y < resized.size().height - 1; y++) {
-            magnitudes[scaleIndex][intervalIndex].at<float>(Point(x, y)) = calculateMagnitude(resized, x, y);
+    for (int x = 1; x < gaussian.size().width - 1; x++) {
+        for (int y = 1; y < gaussian.size().height - 1; y++) {
+            magnitudes[scaleIndex][intervalIndex].at<float>(Point(x, y)) = calculateMagnitude(gaussian, x, y);
         }
     }
 }
 
 void SIFT::generateOrientations(int scaleIndex, int intervalIndex) {
     Mat gaussian = gaussians[scaleIndex][intervalIndex];
-    Mat resized;
-
-    // Resize it so we can index it with normal image coordinates later
-    resize(gaussian, resized, gaussian.size() * ((int)pow(2, scaleIndex)));
-    orientations[scaleIndex][intervalIndex] = Mat::zeros(resized.size(), resized.type());
+    orientations[scaleIndex][intervalIndex] = Mat::zeros(gaussian.size(), gaussian.type());
 
     // Start at 1 and end at (length - 1) to prevent out of bounds access
-    for (int x = 1; x < resized.size().width - 1; x++) {
-        for (int y = 1; y < resized.size().height - 1; y++) {
-            orientations[scaleIndex][intervalIndex].at<float>(Point(x, y)) = calculateOrientation(resized, x, y);
+    for (int x = 1; x < gaussian.size().width - 1; x++) {
+        for (int y = 1; y < gaussian.size().height - 1; y++) {
+            orientations[scaleIndex][intervalIndex].at<float>(Point(x, y)) = calculateOrientation(gaussian, x, y);
         }
     }
+}
+
+float SIFT::gaussianWeightingFunction(Extrema extrema, int x, int y) {
+    float distance = sqrt(pow(extrema.location.x - x, 2) + pow(extrema.location.y - y, 2));
+    // 128 = 2 * (0.5 * windowsize=16)^2
+    // e ^ (-(x - mu)^2 / (2*sigma^2))
+    return exp(-pow(distance, 2) / (2 * pow(1.6, 2)));
+}
+
+vector<float> SIFT::generateDescriptorHistogram(Extrema extrema, Point topLeft) {
+    vector<float> histogram(8);
+    for (int i = 0; i < 8; i++) {
+        histogram[i] = 0;
+    }
+    
+    for (int x = topLeft.x; x < topLeft.x + 4; x++) {
+        for (int y = topLeft.y; y < topLeft.y + 4; y++) {
+            if (x < 1 || y < 1 || x / extrema.scale >= (gray_img.size().width / extrema.scale) - 1 || y / extrema.scale >= (gray_img.size().height / extrema.scale) - 1) {
+                // Avoid OOB
+                continue;
+            }
+            float m = magnitudes[extrema.scaleIndex][extrema.intervalIndex].at<float>(Point(x, y) / extrema.scale);
+            float o = orientations[extrema.scaleIndex][extrema.intervalIndex].at<float>(Point(x, y) / extrema.scale);
+            o += extrema.orientation; // rotate in respect with extrema orientation/
+
+            // Put into bins 0 - 7
+            if (o < 0) {
+                o += 2 * M_PI;
+            }
+            int bin = (int)(o / (M_PI / 4)) % 8;
+            
+            // magnitude is weighted by the distance from the extrema using Gaussian blur
+            // TODO: trilinear interpolation???
+            histogram[bin] += m * gaussianWeightingFunction(extrema, x, y);
+        }
+    }
+    
+    return histogram;
+}
+
+Vec<float, 128> SIFT::generateDescriptor(Extrema extrema) {
+    Vec<float, 128> featureVector;
+    for (int i = 0; i < 128; i++) {
+        featureVector[i] = 0;
+    }
+
+    // 16x16 window around extrema (start at location.x/y - 8 to +8)
+    int count = 0;
+    for (int x = extrema.location.x - 8; x < extrema.location.x + 8; x += 4) {
+        for (int y = extrema.location.y - 8; y < extrema.location.y + 8; y += 4) {
+            if (x < 1 || y < 1 || x >= gray_img.size().width - 1 || y >= gray_img.size().height - 1) {
+                // Avoid OOB
+                count += 8;
+                continue;
+            }
+            vector<float> histogram = generateDescriptorHistogram(extrema, Point(x, y));
+            // Copy into our feature vector
+            for (int j = 0; j < 8; j++, count++) {
+                featureVector[count] = histogram[j];
+            }
+        }
+    }
+
+    // Normalize resulting descriptor vector, which is 128 dimensions
+    float length = norm(featureVector);
+    if (length == 0) {
+        return featureVector;
+    }
+    featureVector /= length;
+    // Threshold values to 0.2 and re-normalize...
+    bool renormalize = false;
+    for (int i = 0; i < 128; i++) {
+        if (featureVector[i] > 0.2) {
+            featureVector[i] = 0.2;
+            renormalize = true;
+        }
+    }
+    if (renormalize) {
+        featureVector /= norm(featureVector);
+    }
+
+    return featureVector;
 }

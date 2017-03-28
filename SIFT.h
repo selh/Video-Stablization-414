@@ -23,7 +23,8 @@ struct Extrema {
     int scale;
     int scaleIndex;
     int intervalIndex;
-    Point location;
+    Point location; // Normal image-space coordinates
+    Point scaleLocation; // Scale-space coordinates
     float sigma;
     float magnitude;
     float orientation;
@@ -60,10 +61,18 @@ private:
     float calculateOrientation(Mat& image, int x, int y);
     void generateMagnitudes(int scaleIndex, int intervalIndex);
     void generateOrientations(int scaleIndex, int intervalIndex);
+
+    // Orientation
+
+    // Descriptor generation
+    float gaussianWeightingFunction(Extrema extrema, int x, int y);
+    vector<float> generateDescriptorHistogram(Extrema extrema, Point topLeft);
+    Vec<float, 128> generateDescriptor(Extrema extrema);
 public:
     ~SIFT();
     SIFT(Mat& template_image);
 
     void run();
     void extremaMapper(Mat& image);
+    map<pair<int, int>, Extrema>* getExtremas();
 };
