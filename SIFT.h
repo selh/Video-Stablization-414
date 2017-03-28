@@ -37,6 +37,8 @@ private:
     Mat imageScales[SCALES];
     Mat gaussians[SCALES][INTERVALS + 1];
     Mat dogs[SCALES][INTERVALS];
+    Mat magnitudes[SCALES][INTERVALS];
+    Mat orientations[SCALES][INTERVALS];
 
     map<pair<int, int>, Extrema> extremas;
 
@@ -44,7 +46,7 @@ private:
     void boundsCheck(int arr_row, int arr_col, 
                  int* cstart, int* cstop, 
                  int* rstart, int* rstop );
-    void differenceOfGaussian(int index, float sigma);
+    void differenceOfGaussian(int index, int scale);
     void neighbors(int scaleIndex, int current);
 
     // Extrema checking
@@ -52,6 +54,12 @@ private:
     Mat calculateHessianMatrix33(int x, int y, int scaleIndex, int intervalIndex);
     bool checkExtrema(int x, int y, int scaleIndex, int intervalIndex);
     bool eliminateEdgeResponse(int x, int y, int scaleIndex, int intervalIndex);
+
+    // Generating magnitudes and orientations for later steps
+    float calculateMagnitude(Mat& image, int x, int y);
+    float calculateOrientation(Mat& image, int x, int y);
+    void generateMagnitudes(int scaleIndex, int intervalIndex);
+    void generateOrientations(int scaleIndex, int intervalIndex);
 public:
     ~SIFT();
     SIFT(Mat& template_image);

@@ -14,13 +14,15 @@ void SIFT::run() {
     int scale = 1;
     for (int i = 0; i < SCALES; i++, scale *= 2) {
         resize(gray_img, imageScales[i], gray_img.size() / scale);
-        this->differenceOfGaussian(i, pow(K_FACTOR, scale) * DOG_SIGMA);
+        this->differenceOfGaussian(i, scale);
     }
 
-    // Generate neighbors
+    // Generate extrema, magnitudes and orientations
     for (int i = 0; i < SCALES; i++) {
         for (int j = 1; j < INTERVALS - 1; j++) {
             this->neighbors(i, j);
+            this->generateMagnitudes(i, j);
+            this->generateOrientations(i, j);
         }
     }
 
@@ -66,8 +68,9 @@ void SIFT::extremaMapper(Mat& image) {
     }
 }
 
-void SIFT::differenceOfGaussian(int index, float sigma) {
+void SIFT::differenceOfGaussian(int index, int scale) {
     // e.g. for INTERVALS = 3, we need to calculate 4 gaussian blurs to generate three DoGs
+    float sigma = scale * DOG_SIGMA; // Each Gaussian pyramid starts at scale * sigma
     for (int i = 0; i < INTERVALS + 1; i++) {
         GaussianBlur(imageScales[index], gaussians[index][i], Size(3, 3), sigma);
         sigma = K_FACTOR * sigma;
@@ -234,4 +237,51 @@ bool SIFT::eliminateEdgeResponse(int x, int y, int scaleIndex, int intervalIndex
 
     // If tr^2/det >= (r+1)^2 / r then the princpal curvature is too large, eliminate point
     return (pow(tr, 2) / det) >= THRESHOLD_R;
+}
+
+
+float SIFT::calculateMagnitude(Mat& image, int x, int y) {
+    float leftTerm  = pow(image.at<float>(Point(x+1, y)) - image.at<float>(Point(x-1,y)), 2);
+    float rightTerm = pow(image.at<float>(Point(x, y+1)) - image.at<float>(Point(x,y-1)), 2);
+
+    return sqrt(leftTerm + rightTerm);
+}
+
+float SIFT::calculateOrientation(Mat& image, int x, int y) {
+    float numerator   = image.at<float>(Point(x, y+1)) - image.at<float>(Point(x, y-1));
+    float denominator = image.at<float>(Point(x+1, y)) - image.at<float>(Point(x-1, y));
+
+    return atan2(numerator, denominator);
+}
+
+void SIFT::generateMagnitudes(int scaleIndex, int intervalIndex) {
+    Mat gaussian = gaussians[scaleIndex][intervalIndex];
+    Mat resized;
+
+    // Resize it so we can index it with normal image coordinates later
+    resize(gaussian, resized, gaussian.size() * ((int)pow(2, scaleIndex)));
+    magnitudes[scaleIndex][intervalIndex] = Mat::zeros(resized.size(), resized.type());
+
+    // Start at 1 and end at (length - 1) to prevent out of bounds access
+    for (int x = 1; x < resized.size().width - 1; x++) {
+        for (int y = 1; y < resized.size().height - 1; y++) {
+            magnitudes[scaleIndex][intervalIndex].at<float>(Point(x, y)) = calculateMagnitude(resized, x, y);
+        }
+    }
+}
+
+void SIFT::generateOrientations(int scaleIndex, int intervalIndex) {
+    Mat gaussian = gaussians[scaleIndex][intervalIndex];
+    Mat resized;
+
+    // Resize it so we can index it with normal image coordinates later
+    resize(gaussian, resized, gaussian.size() * ((int)pow(2, scaleIndex)));
+    orientations[scaleIndex][intervalIndex] = Mat::zeros(resized.size(), resized.type());
+
+    // Start at 1 and end at (length - 1) to prevent out of bounds access
+    for (int x = 1; x < resized.size().width - 1; x++) {
+        for (int y = 1; y < resized.size().height - 1; y++) {
+            orientations[scaleIndex][intervalIndex].at<float>(Point(x, y)) = calculateOrientation(resized, x, y);
+        }
+    }
 }
