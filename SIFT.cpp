@@ -78,15 +78,17 @@ void SIFT::differenceOfGaussian(int index, float sigma) {
 }
 
 void SIFT::neighbors(int scaleIndex, int intervalIndex) {
-    int mid, largest, smallest; //if there exists larger value larger == 1
+    int mid;
+    bool largest, smallest; //if there exists larger value larger == 1
     int cstart, cstop, rstart, rstop;
     map<pair<int, int>, Extrema> ::iterator iter;
 
     for (int i = 0; i < dogs[scaleIndex][intervalIndex].cols; i++) {
         for (int j = 0; j < dogs[scaleIndex][intervalIndex].rows; j++) {
-            largest = 0;
-            smallest = 0;
+            largest = false;
+            smallest = false;
 
+            // Note that it is cast to an integer here. We use equality checks later on so we can't use floats
             mid = dogs[scaleIndex][intervalIndex].at<float>(j, i);
 
             cstart = i - 1;
@@ -100,39 +102,39 @@ void SIFT::neighbors(int scaleIndex, int intervalIndex) {
                     //check 8 neighbors
                     //do not evaluate again if at row col of mid value
                     if ((col != i) || (row != j)) {
-                        if (largest != 1 && dogs[scaleIndex][intervalIndex].at<float>(row, col) >= mid) {
-                            largest = 1;
+                        if (!largest && dogs[scaleIndex][intervalIndex].at<float>(row, col) >= mid) {
+                            largest = true;
                         }
-                        if (smallest != 1 && dogs[scaleIndex][intervalIndex].at<float>(row, col) <= mid) {
-                            smallest = 1;
+                        if (!smallest && dogs[scaleIndex][intervalIndex].at<float>(row, col) <= mid) {
+                            smallest = true;
                         }
                     }
                 }
             }
 
-            if (largest != 1) {
+            if (!largest) {
                 //top array & bottom array
-                for (int tc = cstart; tc <= cstop && largest == 0; tc++) {
-                    for (int tr = rstart; tr <= rstop && largest == 0; tr++) {
+                for (int tc = cstart; tc <= cstop && !largest; tc++) {
+                    for (int tr = rstart; tr <= rstop && !largest; tr++) {
                         if (dogs[scaleIndex][intervalIndex+1].at<float>(tr, tc) > mid || dogs[scaleIndex][intervalIndex-1].at<float>(tr, tc) > mid) {
-                            largest = 1;
+                            largest = true;
                         }
                     }
                 }
             }
 
-            if (smallest != 1) {
+            if (!smallest) {
                 //top array & bottom array
-                for (int tc = cstart; tc <= cstop && smallest == 0; tc++) {
-                    for (int tr = rstart; tr <= rstop && smallest == 0; tr++) {
+                for (int tc = cstart; tc <= cstop && !smallest; tc++) {
+                    for (int tr = rstart; tr <= rstop && !smallest; tr++) {
                         if (dogs[scaleIndex][intervalIndex+1].at<float>(tr, tc) < mid || dogs[scaleIndex][intervalIndex-1].at<float>(tr, tc) < mid) {
-                            smallest = 1;
+                            smallest = true;
                         }
                     }
                 }
             }
 
-            if (largest == 0 || smallest == 0) {
+            if (!largest || !smallest) {
                 // Section 4 & 4.1
                 if (checkExtrema(i, j, scaleIndex, intervalIndex) ||
                     eliminateEdgeResponse(i, j, scaleIndex, intervalIndex)) {

@@ -27,7 +27,7 @@ struct Extrema {
     float sigma;
     float magnitude;
     float orientation;
-    int intensity; // TODO: correct?
+    int intensity;
     Vec<float, 128> descriptor;
 };
 
