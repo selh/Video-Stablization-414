@@ -13,6 +13,10 @@ using namespace cv;
 #define DOG_SIGMA 1.6
 #define K_FACTOR sqrt(2)
 
+//Orientation
+#define M_INV_2PI 0.15915 // 1/(2PI) used in gaussian weighted circle calculation
+
+
 // Extrema thresholding
 #define OFFSET_THRESHOLD 0.5
 #define EXTREMA_THRESHOLD 0.03
@@ -28,8 +32,8 @@ struct Extrema {
     Point scaleLocation; // Scale-space coordinates
     float sigma;
     float magnitude;
-    float orientation;
     int intensity;
+    vector<int> orientation;
     Vec<float, 128> descriptor;
 };
 
@@ -46,8 +50,8 @@ private:
 
     // Generating DoG pyamid
     void boundsCheck(int arr_row, int arr_col, 
-                 int* cstart, int* cstop, 
-                 int* rstart, int* rstop );
+                     int* cstart, int* cstop, 
+                     int* rstart, int* rstop );
     void differenceOfGaussian(int index, int scale);
     void neighbors(int scaleIndex, int current);
 
@@ -64,11 +68,15 @@ private:
     void generateOrientations(int scaleIndex, int intervalIndex);
 
     // Orientation
+    void distrHistVals(vector<float>* histogram, float angle, float weighted);
+    void extremaOrientation();
 
     // Descriptor generation
-    float gaussianWeightingFunction(Extrema extrema, int x, int y);
+    /*If scale provided calculates gaussian with sigma = 1.5*scale*/
+    float gaussianWeightingFunction(Extrema extrema, int x, int y, int scale = -1);
     vector<float> generateDescriptorHistogram(Extrema extrema, Point topLeft);
     Vec<float, 128> generateDescriptor(Extrema extrema);
+
 public:
     ~SIFT();
     SIFT(Mat& template_image);

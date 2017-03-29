@@ -27,7 +27,7 @@ void SIFT::run() {
     }
 
     // Create orientations
-    // <...>
+    extremaOrientation();
 
     // Generate descriptors
     map<pair<int,int>,Extrema>::iterator it;
@@ -41,19 +41,19 @@ map<pair<int, int>, Extrema>* SIFT::getExtremas() {
 }
 
 void SIFT::boundsCheck(int arr_row, int arr_col,
-    int* cstart, int* cstop,
-    int* rstart, int* rstop) {
+                       int* cstart, int* cstop,
+                       int* rstart, int* rstop ) {
     if (*cstart < 0) {
         *cstart = 0;
     }
-    if (*cstop > arr_col - 1) {
+    if (*cstop >= arr_col ) {
         *cstop = arr_col - 1;
     }
 
     if (*rstart < 0) {
         *rstart = 0;
     }
-    if (*rstop > arr_row - 1) {
+    if (*rstop >= arr_row ) {
         *rstop = arr_row - 1;
     }
 }
@@ -82,7 +82,7 @@ void SIFT::differenceOfGaussian(int index, int scale) {
 }
 
 void SIFT::neighbors(int scaleIndex, int intervalIndex) {
-    int mid;
+    int mid, scale, scaled_x, scaled_y;
     bool largest, smallest; //if there exists larger value larger == 1
     int cstart, cstop, rstart, rstop;
     map<pair<int, int>, Extrema> ::iterator iter;
@@ -96,9 +96,9 @@ void SIFT::neighbors(int scaleIndex, int intervalIndex) {
             mid = dogs[scaleIndex][intervalIndex].at<float>(j, i);
 
             cstart = i - 1;
-            cstop = i + 1;
+            cstop  = i + 1;
             rstart = j - 1;
-            rstop = j + 1;
+            rstop  = j + 1;
             boundsCheck(dogs[scaleIndex][intervalIndex].rows, dogs[scaleIndex][intervalIndex].cols, &cstart, &cstop, &rstart, &rstop);
 
             for (int col = cstart; col <= cstop; col++) {
@@ -144,26 +144,29 @@ void SIFT::neighbors(int scaleIndex, int intervalIndex) {
                     eliminateEdgeResponse(i, j, scaleIndex, intervalIndex)) {
                     continue;
                 }
+                scale = pow(2, scaleIndex);
+                scaled_x = i*scale;
+                scaled_y = j*scale;
+                iter = extremas.find(make_pair(scaled_x, scaled_y));
 
-                iter = extremas.find(make_pair(i, j));
                 if (iter == extremas.end()) {
                     Extrema extrema;
                     extrema.intervalIndex = intervalIndex;
                     extrema.scaleIndex = scaleIndex;
-                    extrema.scale = pow(2, scaleIndex);
-                    extrema.location = Point(i, j) * extrema.scale;
+                    extrema.scale = scale;
+                    extrema.location = Point(scaled_x, scaled_y);
                     extrema.scaleLocation = Point(i, j);
                     extrema.intensity = mid;
                     // default values.
                     extrema.magnitude = 1;
-                    extrema.orientation = 0;
-                    extremas.insert(make_pair(make_pair(i, j), extrema));
+                    extrema.orientation = vector<int>();
+                    extremas.insert(make_pair(make_pair(scaled_x, scaled_y), extrema));
                 } else {
                     iter->second.intervalIndex = intervalIndex;
                     iter->second.scaleIndex = scaleIndex;
                     iter->second.intensity = mid;
                     iter->second.scale = pow(2, scaleIndex);
-                    iter->second.location = Point(i, j) * iter->second.scale;
+                    iter->second.location = Point(scaled_x, scaled_y);
                     iter->second.scaleLocation = Point(i, j);
                 }
             }
@@ -280,6 +283,77 @@ void SIFT::generateMagnitudes(int scaleIndex, int intervalIndex) {
     }
 }
 
+
+
+/* Takes angles in degrees */
+void SIFT::distrHistVals(vector<float>* histogram, float angle, float weighted){
+  int index = 0;
+  int rounded = (round((angle + 5)/10))*10;
+  //cout << rounded << " " << endl;
+  if( rounded == 0 || rounded < 10 || rounded == 360 ){
+    (*histogram)[0] += weighted;
+  }
+  else if ( rounded >= 10 && rounded < 360 ){
+    index = floor(rounded/10);
+    (*histogram)[index] += weighted;
+  }
+
+}
+
+/*Builds a weighted histogram based on gradient direction and gradient magnitude.*/
+void SIFT::extremaOrientation(){
+
+  vector<float> histogram(37);
+  int x_cor, y_cor;
+  int cstart, cstop, rstart, rstop;
+  int  weighted, scale, scaleIndex, interval, max;
+
+  for(auto iter= extremas.begin(); iter != extremas.end(); iter++){
+    x_cor = iter->second.scaleLocation.x;
+    y_cor = iter->second.scaleLocation.y;
+
+    for(int h=0; h< histogram.size(); h++){
+      histogram[h] = 0;
+    }
+
+    //get weighted values for each neigbour and add to histogram
+    scale = iter->second.scale;
+    scaleIndex = iter->second.scaleIndex;
+    interval = iter->second.intervalIndex;
+
+    cstart = x_cor - scaleIndex;
+    cstop  = x_cor + scaleIndex;
+    rstart = y_cor - scaleIndex;
+    rstop  = y_cor + scaleIndex;
+    boundsCheck(imageScales[scaleIndex].rows, imageScales[scaleIndex].cols, &cstart, &cstop, &rstart, &rstop);
+    //calculate variance
+    for(int col = cstart; col <= cstop; col++){
+      for(int row = rstart; row <= rstop; row++){
+        weighted = magnitudes[scaleIndex][interval].at<float>(row,col)*gaussianWeightingFunction(iter->second, col, row, scale);
+        distrHistVals(&histogram, orientations[scaleIndex][interval].at<float>(row,col), weighted);
+      }
+    }
+
+    max = 0;
+    for(int j=0; j< histogram.size(); j++){
+      if ( histogram[j] > max ){
+        max = histogram[j];
+      }
+    }
+
+    if( max != 0 ){
+      for(int k=0; k< histogram.size(); k++){
+        //cout << histogram[k] << " ";
+        if( histogram[k] >= max*0.8 ){
+          iter->second.orientation.push_back(k*10); //orientation
+        }
+      }
+    }
+
+  }
+}
+
+
 void SIFT::generateOrientations(int scaleIndex, int intervalIndex) {
     Mat gaussian = gaussians[scaleIndex][intervalIndex];
     orientations[scaleIndex][intervalIndex] = Mat::zeros(gaussian.size(), gaussian.type());
@@ -292,12 +366,26 @@ void SIFT::generateOrientations(int scaleIndex, int intervalIndex) {
     }
 }
 
-float SIFT::gaussianWeightingFunction(Extrema extrema, int x, int y) {
-    float distance = sqrt(pow(extrema.location.x - x, 2) + pow(extrema.location.y - y, 2));
-    // 128 = 2 * (0.5 * windowsize=16)^2
-    // e ^ (-(x - mu)^2 / (2*sigma^2))
-    return exp(-pow(distance, 2) / (2 * pow(1.6, 2)));
+//TODO: check if gaussian equations should be same
+/* If scale provided calculates gaussian with sigma = 1.5*scale*/
+float SIFT::gaussianWeightingFunction(Extrema extrema, int x, int y, int scale) {
+
+    float distance;
+
+    if( scale < 0 ){
+        distance = sqrt(pow(extrema.location.x - x, 2) + pow(extrema.location.y - y, 2));
+        // 128 = 2 * (0.5 * windowsize=16)^2
+        // e ^ (-(x - mu)^2 / (2*sigma^2))
+        return exp(-pow(distance, 2) / (2 * pow(1.6, 2)));
+    }
+    else{
+
+        distance = pow(extrema.location.x - x,2) + pow(extrema.location.y - y, 2); //this one doesnt have sqrt
+        distance = exp(-0.5 * pow(distance / (scale * 1.5), 2));
+        return M_INV_2PI*distance;
+    }
 }
+
 
 vector<float> SIFT::generateDescriptorHistogram(Extrema extrema, Point topLeft) {
     vector<float> histogram(8);
@@ -313,7 +401,7 @@ vector<float> SIFT::generateDescriptorHistogram(Extrema extrema, Point topLeft) 
             }
             float m = magnitudes[extrema.scaleIndex][extrema.intervalIndex].at<float>(Point(x, y) / extrema.scale);
             float o = orientations[extrema.scaleIndex][extrema.intervalIndex].at<float>(Point(x, y) / extrema.scale);
-            o += extrema.orientation; // rotate in respect with extrema orientation/
+            //o += extrema.orientation; // rotate in respect with extrema orientation/
 
             // Put into bins 0 - 7
             if (o < 0) {

@@ -32,46 +32,56 @@ int main(int argc, char** argv) {
   sift2.run();
   map<pair<int, int>, Extrema>* secondResults = sift2.getExtremas();
 
-  cout << "Count 1:" << firstResults->size() << endl;
-  cout << "Count 2:" << secondResults->size() << endl;
-
-
-  // Exhaustive search
-  map<pair<int, int>, Extrema>::iterator firstIt;
-  map<pair<int, int>, Extrema>::iterator secondIt;
-  int count = 0;
-  for (firstIt = firstResults->begin(); firstIt != firstResults->end(); firstIt++) {
-    Extrema first = firstIt->second;
-    Vec<float, 128> firstDescriptor = first.descriptor;
-    
-    // Initialize
-    Point firstClose;
-    double firstDistance = -1;
-    Point secondClose;
-    double secondDistance = -1;
-    for (secondIt = secondResults->begin(); secondIt != secondResults->end(); secondIt++) {
-      Extrema second = secondIt->second;
-      Vec<float, 128> secondDescriptor = second.descriptor;
-      double distance = norm(firstDescriptor - secondDescriptor);
-      if (distance < firstDistance || firstDistance == -1) {
-        secondDistance = firstDistance;
-        secondClose = firstClose;
-        firstDistance = distance;
-        firstClose = second.location;
-      }
+  //printing out orientations
+  cout << "key point orientations" << endl;
+  for( auto iter= firstResults->begin(); iter != firstResults->end(); iter++ ){
+    for( int i= 0; i < iter->second.orientation.size(); i++){
+      cout << iter->second.orientation[i] << " " ;
     }
-
-    cout << "1: (" << first.location.x << "," << first.location.y << ")" << endl;
-    cout << "2: (" << firstClose.x << "," << firstClose.y << ") d-distance: " << firstDistance << ", p-distance: " << norm(first.location - firstClose) << endl;
-    cout << "3: (" << secondClose.x << "," << secondClose.y << ") d-distance: " << secondDistance << ", p-distance: " << norm(first.location - secondClose) << endl;
-    cout << "ratio: " << (firstDistance / secondDistance) << endl;
     cout << endl;
+  }
 
-    if (norm(first.location - firstClose) < 50) {
-      count++;
-    }
-  }  
-  cout << "Image space distances < 50: " << count << endl;
+  ////
+  // cout << "Count 1:" << firstResults->size() << endl;
+  // cout << "Count 2:" << secondResults->size() << endl;
+
+
+  // // Exhaustive search
+  // map<pair<int, int>, Extrema>::iterator firstIt;
+  // map<pair<int, int>, Extrema>::iterator secondIt;
+  // int count = 0;
+  // for (firstIt = firstResults->begin(); firstIt != firstResults->end(); firstIt++) {
+  //   Extrema first = firstIt->second;
+  //   Vec<float, 128> firstDescriptor = first.descriptor;
+    
+  //   // Initialize
+  //   Point firstClose;
+  //   double firstDistance = -1;
+  //   Point secondClose;
+  //   double secondDistance = -1;
+  //   for (secondIt = secondResults->begin(); secondIt != secondResults->end(); secondIt++) {
+  //     Extrema second = secondIt->second;
+  //     Vec<float, 128> secondDescriptor = second.descriptor;
+  //     double distance = norm(firstDescriptor - secondDescriptor);
+  //     if (distance < firstDistance || firstDistance == -1) {
+  //       secondDistance = firstDistance;
+  //       secondClose = firstClose;
+  //       firstDistance = distance;
+  //       firstClose = second.location;
+  //     }
+  //   }
+
+  //   cout << "1: (" << first.location.x << "," << first.location.y << ")" << endl;
+  //   cout << "2: (" << firstClose.x << "," << firstClose.y << ") d-distance: " << firstDistance << ", p-distance: " << norm(first.location - firstClose) << endl;
+  //   cout << "3: (" << secondClose.x << "," << secondClose.y << ") d-distance: " << secondDistance << ", p-distance: " << norm(first.location - secondClose) << endl;
+  //   cout << "ratio: " << (firstDistance / secondDistance) << endl;
+  //   cout << endl;
+
+  //   if (norm(first.location - firstClose) < 50) {
+  //     count++;
+  //   }
+  // }  
+  // cout << "Image space distances < 50: " << count << endl;
 
   sift1.extremaMapper(template_img_1);
   namedWindow("Display Image1", WINDOW_AUTOSIZE );
