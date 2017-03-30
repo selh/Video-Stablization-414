@@ -37,6 +37,11 @@ struct Extrema {
     Vec<float, 128> descriptor;
 };
 
+struct Feature {
+    Point location;
+    Vec<float, 128> descriptor;
+};
+
 class SIFT {
 private:
     Mat gray_img;
@@ -47,6 +52,7 @@ private:
     Mat orientations[SCALES][INTERVALS];
 
     map<pair<int, int>, Extrema> extremas;
+    vector<Feature> features;
 
     // Generating DoG pyamid
     void boundsCheck(int arr_row, int arr_col, 
@@ -74,8 +80,8 @@ private:
     // Descriptor generation
     /*If scale provided calculates gaussian with sigma = 1.5*scale*/
     float gaussianWeightingFunction(Extrema extrema, int x, int y, int scale = -1);
-    vector<float> generateDescriptorHistogram(Extrema extrema, Point topLeft);
-    Vec<float, 128> generateDescriptor(Extrema extrema);
+    vector<float> generateDescriptorHistogram(Extrema extrema, Point topLeft, float orientation);
+    Vec<float, 128> generateDescriptor(Extrema extrema, float orientation);
 
 public:
     ~SIFT();
@@ -83,5 +89,5 @@ public:
 
     void run();
     void extremaMapper(Mat& image);
-    map<pair<int, int>, Extrema>* getExtremas();
+    vector<Feature>* getFeatures();
 };

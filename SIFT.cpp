@@ -32,12 +32,19 @@ void SIFT::run() {
     // Generate descriptors
     map<pair<int,int>,Extrema>::iterator it;
     for (it = extremas.begin(); it != extremas.end(); it++) {
-        it->second.descriptor = generateDescriptor(it->second);
+        Extrema extrema = it->second;
+        for (int orientation : extrema.orientation) {
+            Feature feature;
+            feature.location = extrema.location;
+            // Need to convert orientation to radian
+            feature.descriptor = this->generateDescriptor(extrema, ((float)orientation) * M_PI / 180);
+            features.push_back(feature);
+        }
     }
 }
 
-map<pair<int, int>, Extrema>* SIFT::getExtremas() {
-    return &extremas;
+vector<Feature>* SIFT::getFeatures() {
+    return &features;
 }
 
 void SIFT::boundsCheck(int arr_row, int arr_col,
@@ -392,7 +399,7 @@ float SIFT::gaussianWeightingFunction(Extrema extrema, int x, int y, int scale) 
 }
 
 
-vector<float> SIFT::generateDescriptorHistogram(Extrema extrema, Point topLeft) {
+vector<float> SIFT::generateDescriptorHistogram(Extrema extrema, Point topLeft, float orientation) {
     vector<float> histogram(8);
     for (int i = 0; i < 8; i++) {
         histogram[i] = 0;
@@ -406,7 +413,7 @@ vector<float> SIFT::generateDescriptorHistogram(Extrema extrema, Point topLeft) 
             }
             float m = magnitudes[extrema.scaleIndex][extrema.intervalIndex].at<float>(Point(x, y) / extrema.scale);
             float o = orientations[extrema.scaleIndex][extrema.intervalIndex].at<float>(Point(x, y) / extrema.scale);
-            //o += extrema.orientation; // rotate in respect with extrema orientation/
+            o += orientation; // rotate in respect with extrema orientation
 
             // Put into bins 0 - 7
             if (o < 0) {
@@ -423,7 +430,7 @@ vector<float> SIFT::generateDescriptorHistogram(Extrema extrema, Point topLeft) 
     return histogram;
 }
 
-Vec<float, 128> SIFT::generateDescriptor(Extrema extrema) {
+Vec<float, 128> SIFT::generateDescriptor(Extrema extrema, float orientation) {
     Vec<float, 128> featureVector;
     for (int i = 0; i < 128; i++) {
         featureVector[i] = 0;
@@ -438,7 +445,7 @@ Vec<float, 128> SIFT::generateDescriptor(Extrema extrema) {
                 count += 8;
                 continue;
             }
-            vector<float> histogram = generateDescriptorHistogram(extrema, Point(x, y));
+            vector<float> histogram = generateDescriptorHistogram(extrema, Point(x, y), orientation);
             // Copy into our feature vector
             for (int j = 0; j < 8; j++, count++) {
                 featureVector[count] = histogram[j];
