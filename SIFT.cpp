@@ -285,16 +285,18 @@ void SIFT::generateMagnitudes(int scaleIndex, int intervalIndex) {
 
 
 
-/* Takes angles in degrees */
+/* Takes angles as radians, converts to degrees */
 void SIFT::distrHistVals(vector<float>* histogram, float angle, float weighted){
+
   int index = 0;
-  int rounded = (round((angle + 5)/10))*10;
-  //cout << rounded << " " << endl;
-  if( rounded == 0 || rounded < 10 || rounded == 360 ){
+  int degrees = 360 + angle* ( 180 / M_PI );
+  degrees = degrees % 360;
+
+  if( degrees == 0 || degrees < 10 || degrees == 360 ){
     (*histogram)[0] += weighted;
   }
-  else if ( rounded >= 10 && rounded < 360 ){
-    index = floor(rounded/10);
+  else if ( degrees >= 10 && degrees < 360 ){
+    index = floor(degrees/10);
     (*histogram)[index] += weighted;
   }
 
@@ -303,7 +305,7 @@ void SIFT::distrHistVals(vector<float>* histogram, float angle, float weighted){
 /*Builds a weighted histogram based on gradient direction and gradient magnitude.*/
 void SIFT::extremaOrientation(){
 
-  vector<float> histogram(37);
+  vector<float> histogram(37,0);
   int x_cor, y_cor;
   int cstart, cstop, rstart, rstop;
   int  weighted, scale, scaleIndex, interval, max;
@@ -343,12 +345,15 @@ void SIFT::extremaOrientation(){
 
     if( max != 0 ){
       for(int k=0; k< histogram.size(); k++){
-        //cout << histogram[k] << " ";
         if( histogram[k] >= max*0.8 ){
           iter->second.orientation.push_back(k*10); //orientation
         }
       }
     }
+    else{ //give it orientation 0 if maximum of histogram found to be 0
+      iter->second.orientation.push_back(0); //orientation
+    }
+
 
   }
 }
