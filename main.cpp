@@ -25,16 +25,13 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  SIFT sift1(template_img_1);
-  sift1.run();
-  vector<Feature>* firstResults = sift1.getFeatures();
-  SIFT sift2(template_img_2);
-  sift2.run();
-  vector<Feature>* secondResults = sift2.getFeatures();
+  SIFT sift;
+  vector<Feature> firstResults = sift.run(template_img_1);
+  vector<Feature> secondResults = sift.run(template_img_2);
 
   // //printing out orientations
   // cout << "key point orientations" << endl;
-  // for( auto iter= firstResults->begin(); iter != firstResults->end(); iter++ ){
+  // for( auto iter= firstResults.begin(); iter != firstResults.end(); iter++ ){
   //   for( int i= 0; i < iter->second.orientation.size(); i++){
   //     cout << iter->second.orientation[i] << " " ;
   //   }
@@ -42,15 +39,15 @@ int main(int argc, char** argv) {
   // }
 
   ////
-  cout << "Count 1:" << firstResults->size() << endl;
-  cout << "Count 2:" << secondResults->size() << endl;
+  cout << "Count 1:" << firstResults.size() << endl;
+  cout << "Count 2:" << secondResults.size() << endl;
 
 
   // Exhaustive search
   vector<Feature>::iterator firstIt;
   vector<Feature>::iterator secondIt;
   int count = 0;
-  for (firstIt = firstResults->begin(); firstIt != firstResults->end(); firstIt++) {
+  for (firstIt = firstResults.begin(); firstIt != firstResults.end(); firstIt++) {
     Feature first = (*firstIt);
     Vec<float, 128> firstDescriptor = first.descriptor;
     
@@ -59,7 +56,7 @@ int main(int argc, char** argv) {
     double firstDistance = -1;
     Point secondClose;
     double secondDistance = -1;
-    for (secondIt = secondResults->begin(); secondIt != secondResults->end(); secondIt++) {
+    for (secondIt = secondResults.begin(); secondIt != secondResults.end(); secondIt++) {
       Feature second = (*secondIt);
       Vec<float, 128> secondDescriptor = second.descriptor;
       double distance = norm(firstDescriptor - secondDescriptor);
@@ -83,10 +80,10 @@ int main(int argc, char** argv) {
   }  
   cout << "Image space distances < 50: " << count << endl;
 
-  sift1.extremaMapper(template_img_1);
+  sift.featureMapper(template_img_1, firstResults);
   namedWindow("Display Image1", WINDOW_AUTOSIZE );
   imshow("Display Image1", template_img_1);
-  sift2.extremaMapper(template_img_2);
+  sift.featureMapper(template_img_2, secondResults);
   namedWindow("Display Image2", WINDOW_AUTOSIZE );
   imshow("Display Image2", template_img_2);
   waitKey(0);

@@ -85,9 +85,8 @@ private:
 
 public:
     ~SIFT();
-    SIFT(Mat& template_image);
+    SIFT();
 
-    void run();
-    void extremaMapper(Mat& image);
-    vector<Feature>* getFeatures();
+    vector<Feature> run(Mat& template_image);
+    void featureMapper(Mat& image, vector<Feature>& features);
 };

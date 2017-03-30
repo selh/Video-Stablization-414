@@ -1,15 +1,20 @@
 #include "SIFT.h"
 
-SIFT::SIFT(Mat& template_image) {
-    cvtColor(template_image, gray_img, CV_BGR2GRAY);
-    gray_img.convertTo(gray_img, CV_32F);
+SIFT::SIFT() {
+
 }
 
 SIFT::~SIFT() {
 
 }
 
-void SIFT::run() {
+vector<Feature> SIFT::run(Mat& template_image) {
+    cvtColor(template_image, gray_img, CV_BGR2GRAY);
+    gray_img.convertTo(gray_img, CV_32F);
+
+    extremas.clear();
+    features.clear();
+
     // Generate DoGs
     int scale = 1;
     for (int i = 0; i < SCALES; i++, scale *= 2) {
@@ -41,10 +46,8 @@ void SIFT::run() {
             features.push_back(feature);
         }
     }
-}
 
-vector<Feature>* SIFT::getFeatures() {
-    return &features;
+    return features;
 }
 
 void SIFT::boundsCheck(int arr_row, int arr_col,
@@ -65,14 +68,14 @@ void SIFT::boundsCheck(int arr_row, int arr_col,
     }
 }
 
-void SIFT::extremaMapper(Mat& image) {
+void SIFT::featureMapper(Mat& image, vector<Feature>& features) {
     int x_cor, y_cor;
     int scale_size = 0;
-    map<pair<int, int>, Extrema>::iterator iter;
+    vector<Feature>::iterator iter;
 
-    for(iter = extremas.begin(); iter != extremas.end(); iter++){
-        Extrema extrema = iter->second;
-        circle(image, extrema.location, 2 * extrema.scale, Scalar(0,0,255));
+    for(iter = features.begin(); iter != features.end(); iter++){
+        Feature feature = (*iter);
+        circle(image, feature.location, 3, Scalar(0,0,255));
     }
 }
 
