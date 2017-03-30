@@ -3,6 +3,7 @@
 // using namespace cv;
 // using namespace std;
 
+
 int main(int argc, char** argv) {
   if ( argc != 3 ){
     printf("usage: DisplayImage.out <Image_Path> <Image_Path>\n");
@@ -41,17 +42,17 @@ int main(int argc, char** argv) {
   //   cout << endl;
   // }
 
-  ////
+
+  //
   cout << "Count 1:" << firstResults->size() << endl;
   cout << "Count 2:" << secondResults->size() << endl;
 
 
   // Exhaustive search
-  vector<Feature>::iterator firstIt;
-  vector<Feature>::iterator secondIt;
+  map<pair<int, int>, Extrema>::iterator firstIt;
+  map<pair<int, int>, Extrema>::iterator secondIt;
   int count = 0;
   for (firstIt = firstResults->begin(); firstIt != firstResults->end(); firstIt++) {
-    Feature first = (*firstIt);
     Vec<float, 128> firstDescriptor = first.descriptor;
     
     // Initialize
@@ -77,9 +78,11 @@ int main(int argc, char** argv) {
     cout << "ratio: " << (firstDistance / secondDistance) << endl;
     cout << endl;
 
+
     if (norm(first.location - firstClose) < 50) {
       count++;
     }
+
   }  
   cout << "Image space distances < 50: " << count << endl;
 

@@ -90,4 +90,6 @@ public:
     void run();
     void extremaMapper(Mat& image);
     vector<Feature>* getFeatures();
+    void drawMatches(Mat& image1, Mat&image2, vector<Feature> features1, vector<Feature> features2);
+    map<pair<int, int>, Extrema>* getExtremas();
 };
