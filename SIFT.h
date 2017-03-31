@@ -83,10 +83,16 @@ private:
     vector<float> generateDescriptorHistogram(Extrema extrema, Point topLeft, float orientation);
     Vec<float, 128> generateDescriptor(Extrema extrema, float orientation);
 
+    //Feature matching algorithms
+    static void drawNearestNeighborsRatio(vector<Feature>* features1, vector<Feature>* features2, Mat& combined_img, int img_offset);
+
 public:
     ~SIFT();
     SIFT();
 
     vector<Feature> run(Mat& template_image);
-    void featureMapper(Mat& image, vector<Feature>& features);
+    static void featureMapper(Mat& image, vector<Feature>& features);
+
+    /*Images provided to this function should have extrema pre-drawn*/
+    static Mat drawMatches(Mat& image1, Mat& image2, vector<Feature>* features1, vector<Feature>* features2);
 };

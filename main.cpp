@@ -1,17 +1,18 @@
+#include <iostream>
 #include "SIFT.h"
 
-// using namespace cv;
-// using namespace std;
+using namespace std;
+
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        printf("usage: DisplayImage.out <Video Path>\n");
+        cout << "Usage: DisplayImage <Video Path>" << endl;
         return -1;
     }
 
     VideoCapture video(argv[1]);
     if (!video.isOpened()) {
-        printf("No video data\n");
+        cout << "No video data found in file \"" << argv[1] << "\"" << endl;
         return -1;
     }
 
@@ -29,10 +30,16 @@ int main(int argc, char** argv) {
     vector<Feature> previousFeature = sift.run(previousFrame);
     namedWindow("Unstabilized", WINDOW_AUTOSIZE );
     namedWindow("Stabilized", WINDOW_AUTOSIZE );
+
+    SIFT::featureMapper(currentFrame, currentFeature);
+    SIFT::featureMapper(previousFrame, previousFeature);
     
     while (true) {
-        cout << "Analyzing..." << endl;
-        // Analyze frames
+        Mat combined = SIFT::drawMatches(currentFrame, previousFrame, &currentFeature, &previousFeature);
+        namedWindow("Combined", WINDOW_AUTOSIZE );
+        imshow("Combined", combined);
+        //imwrite("FeatureMatchV1.jpg", combined);
+        waitKey(1);
 
         // Copy current frame to previous
         currentFrame.copyTo(previousFrame);
@@ -42,11 +49,15 @@ int main(int argc, char** argv) {
         if (!success) {
             break;
         }
-        currentFeature = sift.run(currentFrame);
 
         //cout << "Displaying result..." << endl;
-        imshow("Unstabilized", currentFrame);
-        waitKey(1);
+        // imshow("Unstabilized", currentFrame);
+        // waitKey(1);
+
+        // Analyze frames
+        cout << "Analyzing..." << endl;
+        currentFeature = sift.run(currentFrame);
+        SIFT::featureMapper(currentFrame, currentFeature);
     }
 
     return 0;
