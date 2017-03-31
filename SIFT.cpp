@@ -10,6 +10,7 @@ SIFT::~SIFT() {
 }
 
 void SIFT::run() {
+
     // Generate DoGs
     int scale = 1;
     for (int i = 0; i < SCALES; i++, scale *= 2) {
@@ -41,11 +42,14 @@ void SIFT::run() {
             features.push_back(feature);
         }
     }
+
 }
 
 vector<Feature>* SIFT::getFeatures() {
     return &features;
 }
+
+//LOG APPROXIMATION - DIFFERENCE OF GAUSSIAN 
 
 void SIFT::boundsCheck(int arr_row, int arr_col,
                        int* cstart, int* cstop,
@@ -87,6 +91,8 @@ void SIFT::differenceOfGaussian(int index, int scale) {
         }
     }
 }
+
+//FIND EXTREMA BETWEEN DOG APPROXIMATIONS
 
 void SIFT::neighbors(int scaleIndex, int intervalIndex) {
     int mid, scale, scaled_x, scaled_y;
@@ -181,6 +187,8 @@ void SIFT::neighbors(int scaleIndex, int intervalIndex) {
     }
 }
 
+//REMOVE NOISY EXTREMA
+
 // Checks bounds before grabbing float.
 float SIFT::retrieveFloat(int x, int y, int scaleIndex, int intervalIndex) {
     if (x < 0 || y < 0
@@ -263,6 +271,7 @@ bool SIFT::eliminateEdgeResponse(int x, int y, int scaleIndex, int intervalIndex
     return (pow(tr, 2) / det) >= THRESHOLD_R;
 }
 
+//ORIENTATION AND DESCRIPTORS
 
 float SIFT::calculateMagnitude(Mat& image, int x, int y) {
     float leftTerm  = pow(image.at<float>(Point(x+1, y)) - image.at<float>(Point(x-1,y)), 2);
@@ -294,7 +303,7 @@ void SIFT::generateMagnitudes(int scaleIndex, int intervalIndex) {
 
 /* Takes angles as radians, converts to degrees */
 void SIFT::distrHistVals(vector<float>* histogram, float angle, float weighted){
-
+//cout << weighted << " ";
   int index = 0;
   int degrees = 360 + angle* ( 180 / M_PI );
   degrees = degrees % 360;
@@ -312,10 +321,11 @@ void SIFT::distrHistVals(vector<float>* histogram, float angle, float weighted){
 /*Builds a weighted histogram based on gradient direction and gradient magnitude.*/
 void SIFT::extremaOrientation(){
 
-  vector<float> histogram(37,0);
+  vector<float> histogram(37);
   int x_cor, y_cor;
   int cstart, cstop, rstart, rstop;
-  int  weighted, scale, scaleIndex, interval, max;
+  float  weighted, max;
+  int scale, scaleIndex, interval;
 
   for(auto iter= extremas.begin(); iter != extremas.end(); iter++){
     x_cor = iter->second.scaleLocation.x;
@@ -358,6 +368,7 @@ void SIFT::extremaOrientation(){
       }
     }
     else{ //give it orientation 0 if maximum of histogram found to be 0
+      cout << "zero " ;
       iter->second.orientation.push_back(0); //orientation
     }
 
@@ -382,18 +393,17 @@ void SIFT::generateOrientations(int scaleIndex, int intervalIndex) {
 /* If scale provided calculates gaussian with sigma = 1.5*scale*/
 float SIFT::gaussianWeightingFunction(Extrema extrema, int x, int y, int scale) {
 
-    float distance;
+    float distance = pow(extrema.location.x - x, 2) + pow(extrema.location.y - y, 2);
 
     if( scale < 0 ){
-        distance = sqrt(pow(extrema.location.x - x, 2) + pow(extrema.location.y - y, 2));
         // 128 = 2 * (0.5 * windowsize=16)^2
         // e ^ (-(x - mu)^2 / (2*sigma^2))
-        return exp(-pow(distance, 2) / (2 * pow(1.6, 2)));
+        return exp(-(distance) / (2 * pow(1.6, 2)));
     }
     else{
+      //cout << distance / pow((scale * 1.5), 2) << " ";
 
-        distance = pow(extrema.location.x - x,2) + pow(extrema.location.y - y, 2); //this one doesnt have sqrt
-        distance = exp(-0.5 * pow(distance / (scale * 1.5), 2));
+        distance = exp(-0.5 * (distance / pow(scale * 1.5, 2)));
         return M_INV_2PI*distance;
     }
 }
@@ -472,4 +482,78 @@ Vec<float, 128> SIFT::generateDescriptor(Extrema extrema, float orientation) {
     }
 
     return featureVector;
+}
+
+//FEATURE MATCHING
+
+/*Images provided to this function should have extrema pre-drawn*/
+Mat SIFT::drawMatches(Mat& image1, Mat& image2, vector<Feature>* features2){
+  
+  Mat combined_img;
+  int new_width, new_height;
+  int img1_row, img1_col, img2_row, img2_col;
+
+  new_width  = image1.cols + image2.cols;
+  new_height = image1.rows;
+  if ( image2.rows > new_height ){
+    new_height = image2.rows;
+  }
+
+  //set up image boundaries for first and second
+  img1_row = image1.rows;
+  img1_col = image1.cols;
+
+  img2_row = image2.rows;
+  img2_col = image1.cols + image2.cols;
+
+  //need to do this b/c don't know image type and depth
+  resize(image1, combined_img, Size(new_width, new_height));
+
+  if( image2.rows != image1.rows || image2.cols != image1.cols ){
+    combined_img.setTo(Scalar(0,0,0));
+  }
+
+  //Transfer images over
+  image1.copyTo(combined_img.rowRange(0, img1_row).colRange(0, img1_col));
+  image2.copyTo(combined_img.rowRange(0, img2_row).colRange(img1_col, img2_col));
+
+  drawNearestNeighborsRatio(features2, combined_img, img1_col);
+
+  return combined_img;
+}
+
+void SIFT::drawNearestNeighborsRatio(vector<Feature>* features2, Mat& combined_img, int img_offset){
+  
+  Point second_point;
+  vector<Feature>::iterator firstIt;
+  vector<Feature>::iterator secondIt;
+  int count = 0;
+  for (firstIt = features.begin(); firstIt != features.end(); firstIt++) {
+    Feature first = (*firstIt);
+    Vec<float, 128> firstDescriptor = first.descriptor;
+    
+    // Initialize
+    Point firstClose;
+    double firstDistance = -1;
+    Point secondClose;
+    double secondDistance = -1;
+    for (secondIt = features2->begin(); secondIt != features2->end(); secondIt++) {
+      Feature second = (*secondIt);
+      Vec<float, 128> secondDescriptor = second.descriptor;
+      double distance = norm(firstDescriptor - secondDescriptor);
+      if (distance < firstDistance || firstDistance == -1) {
+        secondDistance = firstDistance;
+        secondClose = firstClose;
+        firstDistance = distance;
+        firstClose = second.location;
+      }
+    }
+
+    if (norm(first.location - firstClose) < 50) {
+      second_point.x = firstClose.x + img_offset;
+      second_point.y = firstClose.y;
+      line(combined_img, first.location, second_point, Scalar(0,255,0));
+    }
+  }  
+
 }
