@@ -44,9 +44,9 @@ int main(int argc, char** argv) {
         }
         currentFeature = sift.run(currentFrame);
 
-        cout << "Displaying result..." << endl;
+        //cout << "Displaying result..." << endl;
         imshow("Unstabilized", currentFrame);
-        waitKey(0);
+        waitKey(1);
     }
 
     return 0;
