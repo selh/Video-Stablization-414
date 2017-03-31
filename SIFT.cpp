@@ -550,7 +550,8 @@ void SIFT::drawNearestNeighborsRatio(vector<Feature>* features1, vector<Feature>
       }
     }
 
-    if (norm(first.location - firstClose) < 50) {
+    // TODO: make these command line arguments
+    if (norm(first.location - firstClose) < 50 && (firstDistance / secondDistance) < 0.2) {
       second_point.x = firstClose.x + img_offset;
       second_point.y = firstClose.y;
       line(combined_img, first.location, second_point, Scalar(0,255,0));
