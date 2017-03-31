@@ -368,7 +368,7 @@ void SIFT::extremaOrientation(){
       }
     }
     else{ //give it orientation 0 if maximum of histogram found to be 0
-      cout << "zero " ;
+      //cout << "zero " ;
       iter->second.orientation.push_back(0); //orientation
     }
 

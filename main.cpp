@@ -76,16 +76,16 @@ int main(int argc, char** argv) {
   // cout << "Image space distances < 50: " << count << endl;
 
 
-  // sift1.extremaMapper(template_img_1);
-  // // namedWindow("Display Image1", WINDOW_AUTOSIZE );
-  // // imshow("Display Image1", template_img_1);
-  // sift2.extremaMapper(template_img_2);
-  // // namedWindow("Display Image2", WINDOW_AUTOSIZE );
-  // // imshow("Display Image2", template_img_2);
+  sift1.extremaMapper(template_img_1);
+  // namedWindow("Display Image1", WINDOW_AUTOSIZE );
+  // imshow("Display Image1", template_img_1);
+  sift2.extremaMapper(template_img_2);
+  // namedWindow("Display Image2", WINDOW_AUTOSIZE );
+  // imshow("Display Image2", template_img_2);
 
-  // Mat combined = sift1.drawMatches(template_img_1, template_img_2, secondResults);
-  // namedWindow("Combined", WINDOW_AUTOSIZE );
-  // imshow("Combined", combined);
+  Mat combined = sift1.drawMatches(template_img_1, template_img_2, secondResults);
+  namedWindow("Combined", WINDOW_AUTOSIZE );
+  imshow("Combined", combined);
   //imwrite("FeatureMatchV1.jpg", combined);
   waitKey(0);
 
