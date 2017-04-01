@@ -84,7 +84,7 @@ private:
     Vec<float, 128> generateDescriptor(Extrema extrema, float orientation);
 
     //Feature matching algorithms
-    static void drawNearestNeighborsRatio(vector<Feature>* features1, vector<Feature>* features2, Mat& combined_img, int img_offset);
+    static Mat drawNearestNeighborsRatio(vector<Feature>& features1, vector<Feature>& features2, Mat& combined_img, int img_offset);
 
 public:
     ~SIFT();
@@ -94,5 +94,5 @@ public:
     static void featureMapper(Mat& image, vector<Feature>& features);
 
     /*Images provided to this function should have extrema pre-drawn*/
-    static Mat drawMatches(Mat& image1, Mat& image2, vector<Feature>* features1, vector<Feature>* features2);
+    static Mat drawMatches(Mat& image1, Mat& image2, vector<Feature>& features1, vector<Feature>& features2);
 };

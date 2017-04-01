@@ -488,7 +488,7 @@ Vec<float, 128> SIFT::generateDescriptor(Extrema extrema, float orientation) {
 //FEATURE MATCHING
 
 /*Images provided to this function should have extrema pre-drawn*/
-Mat SIFT::drawMatches(Mat& image1, Mat& image2, vector<Feature>* features1, vector<Feature>* features2){
+Mat SIFT::drawMatches(Mat& image1, Mat& image2, vector<Feature>& features1, vector<Feature>& features2){
   
   Mat combined_img;
   int new_width, new_height;
@@ -518,18 +518,19 @@ Mat SIFT::drawMatches(Mat& image1, Mat& image2, vector<Feature>* features1, vect
   image1.copyTo(combined_img.rowRange(0, img1_row).colRange(0, img1_col));
   image2.copyTo(combined_img.rowRange(0, img2_row).colRange(img1_col, img2_col));
 
-  drawNearestNeighborsRatio(features1, features2, combined_img, img1_col);
+  return drawNearestNeighborsRatio(features1, features2, combined_img, img1_col);
 
-  return combined_img;
+  //return combined_img;
 }
 
-void SIFT::drawNearestNeighborsRatio(vector<Feature>* features1, vector<Feature>* features2, Mat& combined_img, int img_offset){
+Mat SIFT::drawNearestNeighborsRatio(vector<Feature>& features1, vector<Feature>& features2, Mat& combined_img, int img_offset){
   
   Point second_point;
   vector<Feature>::iterator firstIt;
   vector<Feature>::iterator secondIt;
   int count = 0;
-  for (firstIt = features1->begin(); firstIt != features1->end(); firstIt++) {
+  vector<Point2f> good1, good2;
+  for (firstIt = features1.begin(); firstIt != features1.end(); firstIt++) {
     Feature first = (*firstIt);
     Vec<float, 128> firstDescriptor = first.descriptor;
     
@@ -538,8 +539,11 @@ void SIFT::drawNearestNeighborsRatio(vector<Feature>* features1, vector<Feature>
     double firstDistance = -1;
     Point secondClose;
     double secondDistance = -1;
-    for (secondIt = features2->begin(); secondIt != features2->end(); secondIt++) {
+    for (secondIt = features2.begin(); secondIt != features2.end(); secondIt++) {
       Feature second = (*secondIt);
+      if (norm(first.location - second.location) > 50) {
+          continue;
+      }
       Vec<float, 128> secondDescriptor = second.descriptor;
       double distance = norm(firstDescriptor - secondDescriptor);
       if (distance < firstDistance || firstDistance == -1) {
@@ -555,7 +559,12 @@ void SIFT::drawNearestNeighborsRatio(vector<Feature>* features1, vector<Feature>
       second_point.x = firstClose.x + img_offset;
       second_point.y = firstClose.y;
       line(combined_img, first.location, second_point, Scalar(0,255,0));
+      good1.push_back(Point2f(first.location.x, first.location.y));
+      good2.push_back(Point2f(firstClose.x, firstClose.y));
     }
   }  
+  Mat H = findHomography(good1, good2, CV_RANSAC);
+
+  return H;
 
 }
