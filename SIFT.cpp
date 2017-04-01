@@ -29,6 +29,8 @@ void SIFT::run() {
 
     // Create orientations
     extremaOrientation();
+    // namedWindow("Display Image1", WINDOW_AUTOSIZE );
+    // imshow("Display Image1", orientations[0][1]);
 
     // Generate descriptors
     map<pair<int,int>,Extrema>::iterator it;
@@ -303,7 +305,6 @@ void SIFT::generateMagnitudes(int scaleIndex, int intervalIndex) {
 
 /* Takes angles as radians, converts to degrees */
 void SIFT::distrHistVals(vector<float>* histogram, float angle, float weighted){
-//cout << weighted << " ";
   int index = 0;
   int degrees = 360 + angle* ( 180 / M_PI );
   degrees = degrees % 360;
@@ -340,10 +341,10 @@ void SIFT::extremaOrientation(){
     scaleIndex = iter->second.scaleIndex;
     interval = iter->second.intervalIndex;
 
-    cstart = x_cor - scaleIndex;
-    cstop  = x_cor + scaleIndex;
-    rstart = y_cor - scaleIndex;
-    rstop  = y_cor + scaleIndex;
+    cstart = x_cor - scale;
+    cstop  = x_cor + scale;
+    rstart = y_cor - scale;
+    rstop  = y_cor + scale;
     boundsCheck(imageScales[scaleIndex].rows, imageScales[scaleIndex].cols, &cstart, &cstop, &rstart, &rstop);
     //calculate variance
     for(int col = cstart; col <= cstop; col++){
@@ -368,7 +369,7 @@ void SIFT::extremaOrientation(){
       }
     }
     else{ //give it orientation 0 if maximum of histogram found to be 0
-      //cout << "zero " ;
+
       iter->second.orientation.push_back(0); //orientation
     }
 
@@ -401,9 +402,8 @@ float SIFT::gaussianWeightingFunction(Extrema extrema, int x, int y, int scale) 
         return exp(-(distance) / (2 * pow(1.6, 2)));
     }
     else{
-      //cout << distance / pow((scale * 1.5), 2) << " ";
 
-        distance = exp(-0.5 * (distance / pow(scale * 1.5, 2)));
+        distance = exp(-distance / (2 * pow(scale * 1.5, 2)));
         return M_INV_2PI*distance;
     }
 }
@@ -531,7 +531,6 @@ void SIFT::drawNearestNeighborsRatio(vector<Feature>* features2, Mat& combined_i
   for (firstIt = features.begin(); firstIt != features.end(); firstIt++) {
     Feature first = (*firstIt);
     Vec<float, 128> firstDescriptor = first.descriptor;
-    
     // Initialize
     Point firstClose;
     double firstDistance = -1;
