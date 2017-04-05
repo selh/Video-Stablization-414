@@ -518,18 +518,17 @@ Mat SIFT::drawMatches(Mat& image1, Mat& image2, vector<Feature>& features1, vect
   image1.copyTo(combined_img.rowRange(0, img1_row).colRange(0, img1_col));
   image2.copyTo(combined_img.rowRange(0, img2_row).colRange(img1_col, img2_col));
 
-  return drawNearestNeighborsRatio(features1, features2, combined_img, img1_col);
+  drawNearestNeighborsRatio(features1, features2, combined_img, img1_col);
 
-  //return combined_img;
+  return combined_img;
 }
 
-Mat SIFT::drawNearestNeighborsRatio(vector<Feature>& features1, vector<Feature>& features2, Mat& combined_img, int img_offset){
-  
+pair<vector<Point2f>, vector<Point2f>> SIFT::getBestMatchingPairs(vector<Feature>& features1, vector<Feature>& features2) {
   Point second_point;
   vector<Feature>::iterator firstIt;
   vector<Feature>::iterator secondIt;
-  int count = 0;
-  vector<Point2f> good1, good2;
+
+  vector<Point2f> goodFeatures1, goodFeatures2;
   for (firstIt = features1.begin(); firstIt != features1.end(); firstIt++) {
     Feature first = (*firstIt);
     Vec<float, 128> firstDescriptor = first.descriptor;
@@ -556,15 +555,27 @@ Mat SIFT::drawNearestNeighborsRatio(vector<Feature>& features1, vector<Feature>&
 
     // TODO: make these command line arguments
     if (norm(first.location - firstClose) < 50 && (firstDistance / secondDistance) < 0.2) {
-      second_point.x = firstClose.x + img_offset;
-      second_point.y = firstClose.y;
-      line(combined_img, first.location, second_point, Scalar(0,255,0));
-      good1.push_back(Point2f(first.location.x, first.location.y));
-      good2.push_back(Point2f(firstClose.x, firstClose.y));
+      // The current pair of features is a good match to pass to findHomography
+      goodFeatures1.push_back(Point2f(first.location.x, first.location.y));
+      goodFeatures2.push_back(Point2f(firstClose.x, firstClose.y));
     }
-  }  
-  Mat H = findHomography(good1, good2, CV_RANSAC);
+  }
 
-  return H;
+  return make_pair(goodFeatures1, goodFeatures2);
+}
 
+void SIFT::drawNearestNeighborsRatio(vector<Feature>& features1, vector<Feature>& features2, Mat& combined_img, int img_offset) {
+    pair<vector<Point2f>, vector<Point2f>> matchingPair = SIFT::getBestMatchingPairs(features1, features2);
+    Point second_point;
+    vector<Point2f>::iterator firstIt;
+    vector<Point2f>::iterator secondIt;
+    for (firstIt = matchingPair.first.begin(), secondIt = matchingPair.second.begin();
+        firstIt != matchingPair.first.end() && secondIt != matchingPair.second.end();
+        firstIt++, secondIt++) {
+        Point2f firstPoint = (*firstIt);
+        Point2f secondPoint (*secondIt);
+        secondPoint.x += img_offset;
+
+        line(combined_img, firstPoint, secondPoint, Scalar(0,255,0));
+    }
 }
