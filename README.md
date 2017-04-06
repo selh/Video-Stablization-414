@@ -10,6 +10,7 @@ g++ 4.9 or higher
 
 HOW TO USE:
 ---
+```
 ./DisplayImage <OPTIONS>
 
 -i, --input <input video/image file>
@@ -27,15 +28,15 @@ HOW TO USE:
   Feature Space ratio threshold. Will default to 0.2 if no threshold is provided.
 -h, --help
   Print out help instructions
-
+```
 
 Functions are seperated into sections under SIFT.cpp as labeled:
 ----
  
-1.LOG APPROXIMATION - DIFFERENCE OF GAUSSIAN (line 53)
-2.FIND EXTREMA BETWEEN DOG APPROXIMATIONS (line 96)
-3.REMOVE NOISY EXTREMA (line 191)
-4.ORIENTATION AND DESCRIPTORS (line 275)
-5.FEATURE MATCHING (line 487)
+1.LOG APPROXIMATION - DIFFERENCE OF GAUSSIAN (line 53)</br>
+2.FIND EXTREMA BETWEEN DOG APPROXIMATIONS (line 96)</br>
+3.REMOVE NOISY EXTREMA (line 191)</br>
+4.ORIENTATION AND DESCRIPTORS (line 275)</br>
+5.FEATURE MATCHING (line 487)</br>
 
 
