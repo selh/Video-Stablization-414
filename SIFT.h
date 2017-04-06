@@ -13,10 +13,6 @@ using namespace cv;
 #define DOG_SIGMA 1.6
 #define K_FACTOR sqrt(2)
 
-//Orientation
-#define M_INV_2PI 0.15915 // 1/(2PI) used in gaussian weighted circle calculation
-
-
 // Extrema thresholding
 #define OFFSET_THRESHOLD 0.5
 #define EXTREMA_THRESHOLD 0.03

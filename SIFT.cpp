@@ -404,8 +404,7 @@ float SIFT::gaussianWeightingFunction(Extrema extrema, int x, int y, int scale) 
     else{
       //cout << distance / pow((scale * 1.5), 2) << " ";
 
-        distance = exp(-0.5 * (distance / pow(scale * 1.5, 2)));
-        return M_INV_2PI*distance;
+        return exp(-0.5 * (distance / pow(scale * 1.5, 2)));
     }
 }
 
