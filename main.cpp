@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
         options.add_options()
             ("i,input", "Input video/image file name", cxxopts::value<std::string>())
             ("j,matchimage", "Input image file name (for image matching only)", cxxopts::value<std::string>())
-            ("o,output", "Output video file name", cxxopts::value<std::string>()->default_value("output.avi"))
+            ("o,output", "Output video file name. Extension must be .avi", cxxopts::value<std::string>()->default_value("output.avi"))
             ("m,mode", "VS (Video stabilization), VM (Video matching), IM (Image matching)", cxxopts::value<std::string>()->default_value("VS"))
             ("d,distance", "Image space distance threshold", cxxopts::value<int>()->default_value("50"))
             ("r,ratio", "Feature space ratio threshold", cxxopts::value<float>()->default_value("0.2"))

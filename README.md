@@ -5,7 +5,9 @@ Video stabilization project for CMPT 414.
 Uses our own implementation of SIFT for feature matching between frames.
 
 REQUIREMENTS:
-g++ 4.9 or higher
+- G++ 4.9 or higher
+- CMake
+- OpenCV with ffmpeg support
 
 
 HOW TO USE:
@@ -19,8 +21,9 @@ HOW TO USE:
 -j, --matchImage <input second image file>
   Provide the second image file that you wish to compare the first image to. (For image matching only)
   
--o, --output <output file name>
-  Provide the name of which you want the output video/image to be named.
+-o, --output <output video file name>
+  Provide the name of which you want the output video to be named. Extension must be .avi
+  (For video-related modes only)
   
 -m, --mode <VS/VM/IM>
   Use mode VS for video stabilization, VM for video matching or IM for image matching.
