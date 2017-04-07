@@ -53,4 +53,12 @@ Functions are seperated into sections under SIFT.cpp as labeled:
 4. ORIENTATION AND DESCRIPTORS (line 275)</br>
 5. FEATURE MATCHING (line 487)</br>
 
-
+Sources
+---
+- D. Lowe. (2005). “Distinctive Image Features from Scale-Invariant Keypoints” [Online] Available: https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf
+- Blue Spotted Butterfly. [Online] Available: butterflyhousemarinecove.org
+- Monarch Butterfly. [Online] Available: pngimg.com
+- Deer in forest. [Online] Available: https://www.lhup.edu/~dsimanek/3d/stereo/3dgallery18.htm
+- Walking in a field. [Online] Available: https://www.youtube.com/watch?v=0Sn2rXlPJZw
+- Walking on a mountain. [Online] Available: https://www.youtube.com/watch?v=L2QvvP2njIs
+- jarro2783 (2014). cxxopts library [Online] Available: https://github.com/jarro2783/cxxopts
