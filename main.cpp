@@ -22,6 +22,7 @@ int main(int argc, char** argv) {
             ("m,mode", "VS (Video stabilization), VM (Video matching), IM (Image matching)", cxxopts::value<std::string>()->default_value("VS"))
             ("d,distance", "Image space distance threshold", cxxopts::value<int>()->default_value("50"))
             ("r,ratio", "Feature space ratio threshold", cxxopts::value<float>()->default_value("0.2"))
+            ("t,motionthreshold", "Threshold for derivative of motion between frames. If exceeded no stabilization occurs.", cxxopts::value<float>()->default_value("1.5"))
             ("h,help", "Print help")
             ;
         options.parse(argc, argv);
@@ -116,6 +117,7 @@ int main(int argc, char** argv) {
             Point2f smoothedMotionVector;
             const long startingFrame = 2;
             const long smoothingFrames = 5;
+            float motionDerivativeThreshold = options["motionthreshold"].as<float>();
 
             // For timing of calls to SIFT, etc.
             long frame = startingFrame;
@@ -147,7 +149,7 @@ int main(int argc, char** argv) {
                         smoothedMotionVector = (1.f / (smoothingFrames - 1)) * smoothedMotionVector + (1.f / smoothingFrames) * motionVector;
                     }
 
-                    if (derivativeOfMotion < 1.5f && matchingPairs.first.size() > 0 && matchingPairs.second.size() > 0) {
+                    if (derivativeOfMotion < motionDerivativeThreshold && matchingPairs.first.size() > 0 && matchingPairs.second.size() > 0) {
                         // Instead of findHomography, calculate a rigid transform so we do not skew the output image
                         Mat rigidTransform = estimateRigidTransform(matchingPairs.first,matchingPairs.second,false);
 

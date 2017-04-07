@@ -31,6 +31,10 @@ HOW TO USE:
   
 -r, --ratio <ratio>
   Feature Space ratio threshold. Will default to 0.2 if no threshold is provided.
+
+-t, --motionthreshold <threshold>
+  Threshold for derivative of motion between frames in pixels. If this threshold is exceeded,
+  stabilization is skipped during that frame. Will default to 1.5 if no threshold is provided.
   
 -h, --help
   Print out help instructions.
