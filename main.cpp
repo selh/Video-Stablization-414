@@ -184,6 +184,7 @@ int main(int argc, char** argv) {
                     }
                     
                     imshow("Stabilized", transform);
+                    imshow("Unstabilized", currentFrame);
                     waitKey(10);
 
                     // Output to video file
