@@ -44,6 +44,13 @@ HOW TO USE:
   
 ```
 
+Example for running video stabilization:
+```
+$ cmake .
+$ make
+$ ./DisplayImage -m VS -i data/video/shaky_1.mp4 -o stabilized.avi
+```
+
 Functions are seperated into sections under SIFT.cpp as labeled:
 ----
  
