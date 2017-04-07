@@ -201,7 +201,6 @@ float SIFT::retrieveFloat(int x, int y, int scaleIndex, int intervalIndex) {
 }
 
 Mat SIFT::calculateHessianMatrix33(int x, int y, int scaleIndex, int intervalIndex) {
-    //TODO: handle points on edges of image (if x=0 we will try to access x-1 or -1)
     float dxx =
         ( retrieveFloat(x+1, y, scaleIndex, intervalIndex) +
           retrieveFloat(x-1, y, scaleIndex, intervalIndex) -
@@ -249,8 +248,6 @@ bool SIFT::checkExtrema(int x, int y, int scaleIndex, int intervalIndex) {
     colDerivative.at<float>(Point(0, 2)) = (retrieveFloat(x, y, scaleIndex, intervalIndex+1) - retrieveFloat(x, y, scaleIndex, intervalIndex-1)) / 2;
 
     Mat extrema = -(hessian.inv()) * colDerivative;
-
-    // TODO: resample (?) if extrema (or offset) is more than 0.5 in any dimension?
 
     // http://stackoverflow.com/questions/22826456/convert-cvmatexpr-to-type
     float value = retrieveFloat(x, y, scaleIndex, intervalIndex) + (1/2) * ((Mat)(colDerivative.t() * extrema)).at<float>(0);
@@ -390,7 +387,6 @@ void SIFT::generateOrientations(int scaleIndex, int intervalIndex) {
     }
 }
 
-//TODO: check if gaussian equations should be same
 /* If scale provided calculates gaussian with sigma = 1.5*scale*/
 float SIFT::gaussianWeightingFunction(Extrema extrema, int x, int y, int scale) {
 
@@ -432,7 +428,6 @@ vector<float> SIFT::generateDescriptorHistogram(Extrema extrema, Point topLeft, 
             int bin = (int)(o / (M_PI / 4)) % 8;
             
             // magnitude is weighted by the distance from the extrema using Gaussian blur
-            // TODO: trilinear interpolation???
             histogram[bin] += m * gaussianWeightingFunction(extrema, x, y);
         }
     }
@@ -552,7 +547,6 @@ pair<vector<Point2f>, vector<Point2f>> SIFT::getBestMatchingPairs(vector<Feature
       }
     }
 
-    // TODO: make these command line arguments
     if (norm(first.location - firstClose) < pixelDistanceThreshold && (firstDistance / secondDistance) < ratioThreshold) {
       // The current pair of features is a good match to pass to findHomography
       goodFeatures1.push_back(Point2f(first.location.x, first.location.y));
