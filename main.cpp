@@ -44,6 +44,8 @@ int main(int argc, char** argv) {
             cout << "Invalid mode \"" << providedMode << "\"" << endl;
             return -1;
         }
+        int pixelDistanceThreshold = options["distance"].as<int>();
+        float ratioThreshold = options["ratio"].as<float>();
 
         if (mode == Mode::ImageMatching) {
             // Handling images
@@ -67,7 +69,7 @@ int main(int argc, char** argv) {
             SIFT::featureMapper(firstImage, firstResults);
             SIFT::featureMapper(secondImage, secondResults);
 
-            Mat combined = SIFT::drawMatches(firstImage, secondImage, firstResults, secondResults);
+            Mat combined = SIFT::drawMatches(firstImage, secondImage, firstResults, secondResults, pixelDistanceThreshold, ratioThreshold);
             namedWindow("Combined", WINDOW_AUTOSIZE );
             imshow("Combined", combined);
 
@@ -102,41 +104,82 @@ int main(int argc, char** argv) {
                 SIFT::featureMapper(previousFrame, previousFeature);
             }
 
-            //OPENCV DOCUMENTATION
-                const string NAME = options["output"].as<string>();   // Form the new name with container
-                int ex = static_cast<int>(video.get(CV_CAP_PROP_FOURCC));     // Get Codec Type- Int form
-
-                // Transform from int to char via Bitwise operators
-                char EXT[] = {(char)(ex & 0XFF) , (char)((ex & 0XFF00) >> 8),(char)((ex & 0XFF0000) >> 16),(char)((ex & 0XFF000000) >> 24), 0};
-
-                Size S = Size((int) video.get(CV_CAP_PROP_FRAME_WIDTH),    // Acquire input size
-                            (int) video.get(CV_CAP_PROP_FRAME_HEIGHT));
-
-                VideoWriter outputVideo;
-                outputVideo.open(NAME, ex, video.get(CV_CAP_PROP_FPS), S, true);
+            // http://docs.opencv.org/2.4/doc/tutorials/highgui/video-write/video-write.html
+            string outputFileName = options["output"].as<string>();
+            int codec = static_cast<int>(video.get(CV_CAP_PROP_FOURCC));
+            Size outputSize = Size((int) video.get(CV_CAP_PROP_FRAME_WIDTH), (int) video.get(CV_CAP_PROP_FRAME_HEIGHT));
+            VideoWriter outputVideo;
+            outputVideo.open(outputFileName, codec, video.get(CV_CAP_PROP_FPS), outputSize, true);
 
             Mat transformationMat;
-            long frame = 2;
+            // For calculating motion and its derivative
+            Point2f smoothedMotionVector;
+            const long startingFrame = 2;
+            const long smoothingFrames = 5;
+
+            // For timing of calls to SIFT, etc.
+            long frame = startingFrame;
             chrono::high_resolution_clock::time_point t1, t2;
-            while (frame < 100) {
+            while (true) {
                 cout << "Frame #" << frame << endl;
                 cout << "Feature size: " << currentFeature.size() << " vs " << previousFeature.size() << endl;
 
                 if (mode == Mode::VideoStabilization) { // Mode: Video stabilization
                     t1 = chrono::high_resolution_clock::now();
-                    pair<vector<Point2f>, vector<Point2f>> matchingPairs = SIFT::getBestMatchingPairs(currentFeature, previousFeature);
-                    Mat H = findHomography(matchingPairs.first, matchingPairs.second, CV_RANSAC);
-                    if (frame == 2) {
-                        H.copyTo(transformationMat);
+                    pair<vector<Point2f>, vector<Point2f>> matchingPairs = SIFT::getBestMatchingPairs(currentFeature, previousFeature, pixelDistanceThreshold, ratioThreshold);
+
+                    // Calculation of motion vector
+                    Point2f motionVector;
+                    vector<Point2f>::iterator i1, i2;
+                    for (i1 = matchingPairs.first.begin(), i2 = matchingPairs.second.begin();
+                        i1 < matchingPairs.first.end() && i2 < matchingPairs.second.end();
+                        i1++, i2++) {
+                        motionVector += ((*i2) - (*i1));
+                    }
+                    motionVector /= ((int)matchingPairs.first.size()); //normalize to size of matchingPairs. cast to int from unsigned long
+                    cout << "Motion vector: " << motionVector << endl;
+                    float derivativeOfMotion = norm(motionVector - smoothedMotionVector);
+                    
+                    // Calculate new smoothed motion vector
+                    if (frame < startingFrame + smoothingFrames) {
+                        smoothedMotionVector += motionVector * (1.f / smoothingFrames);
                     } else {
-                        transformationMat *= H;
+                        smoothedMotionVector = (1.f / (smoothingFrames - 1)) * smoothedMotionVector + (1.f / smoothingFrames) * motionVector;
+                    }
+
+                    if (derivativeOfMotion < 1.5f && matchingPairs.first.size() > 0 && matchingPairs.second.size() > 0) {
+                        // Instead of findHomography, calculate a rigid transform so we do not skew the output image
+                        Mat rigidTransform = estimateRigidTransform(matchingPairs.first,matchingPairs.second,false);
+
+                        if(!rigidTransform.empty()) {
+                            // Convert rigid transformation to a homography
+                            Mat homography = Mat::zeros(3, 3, rigidTransform.type());
+                            Rect matrixSelection(0, 0, 3, 2);
+                            rigidTransform(matrixSelection).copyTo(homography(matrixSelection));
+                            homography.at<double>(2,2) = 1.0;
+
+                            if (transformationMat.empty()) {
+                                // First frame data
+                                homography.copyTo(transformationMat);
+                            } else if (!homography.empty()) {
+                                transformationMat *= homography;
+
+                                cout << "Homography matrix:" << endl;
+                                cout << homography << endl;
+                            }
+                        }
                     }
                     t2 = chrono::high_resolution_clock::now();
                     cout << "Matching time: " << chrono::duration_cast<chrono::milliseconds>(t2 - t1).count() << "ms" << endl;
 
                     // Copy current frame to previous
                     Mat transform = Mat::zeros(currentFrame.size(), currentFrame.type());
-                    warpPerspective(currentFrame, transform, transformationMat, transform.size());
+                    if (!transformationMat.empty()) {
+                        warpPerspective(currentFrame, transform, transformationMat, transform.size());
+                    } else {
+                        // If there's no transformation simply copy it over
+                        currentFrame.copyTo(transform);
+                    }
                     
                     imshow("Stabilized", transform);
                     waitKey(10);
@@ -144,7 +187,7 @@ int main(int argc, char** argv) {
                     // Output to video file
                     outputVideo << transform;
                 } else { // Mode: Show feature matching
-                    Mat combined = SIFT::drawMatches(currentFrame, previousFrame, currentFeature, previousFeature);
+                    Mat combined = SIFT::drawMatches(currentFrame, previousFrame, currentFeature, previousFeature, pixelDistanceThreshold, ratioThreshold);
                     imshow("Combined", combined);
 
                     waitKey(100); // Need to wait some amount of time, otherwise no window appears
