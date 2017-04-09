@@ -93,6 +93,7 @@ public:
     void run();
     void extremaMapper(Mat& image);
     vector<Feature>* getFeatures();
+    int numFeatures();
 
     /*Images provided to this function should have extrema pre-drawn*/
     Mat drawMatches(Mat& image1, Mat& image2, vector<Feature>* features2);

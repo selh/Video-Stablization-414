@@ -51,6 +51,15 @@ vector<Feature>* SIFT::getFeatures() {
     return &features;
 }
 
+int SIFT::numFeatures(){
+
+  int count=0;
+  for(auto i=features.begin(); i != features.end(); i++){
+    count++;
+  }
+  return count;
+}
+
 //LOG APPROXIMATION - DIFFERENCE OF GAUSSIAN 
 
 void SIFT::boundsCheck(int arr_row, int arr_col,
@@ -360,10 +369,11 @@ void SIFT::extremaOrientation(){
         max = histogram[j];
       }
     }
-
+    //cout << "(" << x_cor  << "," << y_cor << ") " ;
     if( max != 0 ){
       for(int k=0; k< histogram.size(); k++){
         if( histogram[k] >= max*0.8 ){
+          //cout << k*10 << " " ;
           iter->second.orientation.push_back(k*10); //orientation
         }
       }
@@ -372,7 +382,7 @@ void SIFT::extremaOrientation(){
 
       iter->second.orientation.push_back(0); //orientation
     }
-
+    //cout << endl;
 
   }
 }
@@ -399,12 +409,13 @@ float SIFT::gaussianWeightingFunction(Extrema extrema, int x, int y, int scale) 
     if( scale < 0 ){
         // 128 = 2 * (0.5 * windowsize=16)^2
         // e ^ (-(x - mu)^2 / (2*sigma^2))
-        return exp(-(distance) / (2 * pow(1.6, 2)));
+        return exp(-(distance) / (2 * pow(8, 2)));
     }
     else{
 
         distance = exp(-distance / (2 * pow(scale * 1.5, 2)));
-        return M_INV_2PI*distance;
+        //return M_INV_2PI*distance;
+        return distance;
     }
 }
 
@@ -527,6 +538,7 @@ void SIFT::drawNearestNeighborsRatio(vector<Feature>* features2, Mat& combined_i
   Point second_point;
   vector<Feature>::iterator firstIt;
   vector<Feature>::iterator secondIt;
+  int color1=0, color2 = 255,color3 = 0;
   int count = 0;
   for (firstIt = features.begin(); firstIt != features.end(); firstIt++) {
     Feature first = (*firstIt);
@@ -548,11 +560,16 @@ void SIFT::drawNearestNeighborsRatio(vector<Feature>* features2, Mat& combined_i
       }
     }
 
-    if (norm(first.location - firstClose) < 50) {
+    if (norm(first.location - firstClose) < 50 && (firstDistance/secondDistance) < 0.8) {
       second_point.x = firstClose.x + img_offset;
       second_point.y = firstClose.y;
-      line(combined_img, first.location, second_point, Scalar(0,255,0));
+      line(combined_img, first.location, second_point, Scalar(color1,color2,color3));
+      circle(combined_img, first.location, 2 , Scalar(0,0,255));
+      circle(combined_img, second_point, 2 , Scalar(0,0,255));
+      count++;
+      // color1 += 2;
+      // if (color1 > 255){ color1 = 0; }
     }
   }  
-
+  cout << "number of matches: " << count << endl;
 }

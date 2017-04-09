@@ -33,18 +33,21 @@ int main(int argc, char** argv) {
   sift2.run();
   vector<Feature>* secondResults = sift2.getFeatures();
 
+  cout << "number of features " << sift1.numFeatures() << endl;
+  cout << "number of features " << sift2.numFeatures() << endl;
 
-  sift1.extremaMapper(template_img_1);
-  // // namedWindow("Display Image1", WINDOW_AUTOSIZE );
-  // // imshow("Display Image1", template_img_1);
-  sift2.extremaMapper(template_img_2);
-  // // namedWindow("Display Image2", WINDOW_AUTOSIZE );
-  // // imshow("Display Image2", template_img_2);
+
+  //sift1.extremaMapper(template_img_1);
+  // namedWindow("Display Image1", WINDOW_AUTOSIZE );
+  // imshow("Display Image1", template_img_1);
+  //sift2.extremaMapper(template_img_2);
+  // namedWindow("Display Image2", WINDOW_AUTOSIZE );
+  // imshow("Display Image2", template_img_2);
 
   Mat combined = sift1.drawMatches(template_img_1, template_img_2, secondResults);
   namedWindow("Combined", WINDOW_AUTOSIZE );
   imshow("Combined", combined);
-  // //imwrite("FeatureMatchV1.jpg", combined);
+  imwrite("butter3.jpg", combined);
   waitKey(0);
 
   return 0;
